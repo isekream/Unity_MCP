@@ -2,7 +2,7 @@
 
 ## ✅ Global MCP is Now Configured!
 
-Your Windsurf MCP is globally configured and will work with **ALL Unity projects**.
+Your Unity MCP is globally configured and will work with **ALL Unity projects**.
 
 ## 🚀 For Any New Unity Project (2-Minute Setup):
 
@@ -18,17 +18,17 @@ Your Windsurf MCP is globally configured and will work with **ALL Unity projects
 - Click `Add`
 
 ### 3. Start the Unity MCP Server
-- Go to `Tools > Windsurf MCP > Server Window`
+- Go to `Window > MCP Server`
 - Click `Start Server`
 - Verify it shows "Status: Running" and "HTTP URL: http://localhost:8090"
 
-### 4. Restart Windsurf IDE
-- Close and reopen Windsurf
-- The Unity MCP will now be available in the Tools menu
+### 4. Restart Your AI IDE
+- Close and reopen your AI IDE (Claude Code, Cursor, Windsurf, Cline, etc.)
+- The Unity MCP tools will now be available
 
 ## 🎉 That's It!
 
-You can now use Windsurf with natural language commands like:
+You can now use your AI IDE with natural language commands like:
 - "List all scenes in the project"
 - "Create a new cube in the current scene"
 - "Build the project for Windows"
@@ -38,7 +38,7 @@ You can now use Windsurf with natural language commands like:
 ## 🔧 Global Configuration Details
 
 **MCP Server Location**: `<PROJECT_FOLDER>/Server/build/index.js`
-**Global Config**: `~/.config/windsurf/mcp.json`
+**Configuration Files**: See [CLIENT_CONFIGS.md](./CLIENT_CONFIGS.md) for your specific IDE
 
 ## 💡 Pro Tips
 

@@ -8,7 +8,7 @@
         "NODE_ENV": "production",
         "UNITY_PORT": "8090"
       },
-      "description": "Unity Editor integration for Windsurf IDE",
+      "description": "Unity Editor MCP integration - 40 tools for project, scene, asset, code, and build management",
       "enabled": true
     }
   }

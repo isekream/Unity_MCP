@@ -1,6 +1,6 @@
-# 🎮 Windsurf Unity MCP Server
+# 🎮 Unity MCP Server
 
-A powerful Model Context Protocol (MCP) server that enables seamless Unity Editor integration with Windsurf IDE. Control Unity projects through natural language commands powered by AI.
+A powerful Model Context Protocol (MCP) server that enables seamless Unity Editor integration with AI IDEs (Claude Code, Cursor, Windsurf, Cline, and more). Control Unity projects through natural language commands powered by AI.
 
 ## ✨ Features
 
@@ -14,24 +14,33 @@ A powerful Model Context Protocol (MCP) server that enables seamless Unity Edito
 ## 🏗️ Architecture
 
 ```
-Windsurf IDE ←→ Node.js MCP Server ←→ Unity Editor C# Plugin
-     │                    │                        │
-  AI Commands      Protocol Bridge            Unity API
+AI IDE (Claude Code/Cursor/Windsurf/Cline) ←→ Node.js MCP Server ←→ Unity Editor C# Plugin
+                    │                                 │                        │
+                AI Commands                    Protocol Bridge            Unity API
 ```
 
 ### Components
 
-1. **Node.js MCP Server** (`Server/`) - Handles Windsurf communication and tool routing
+1. **Node.js MCP Server** (`Server/`) - Handles MCP client communication and tool routing
 2. **Unity C# Plugin** (`Unity/`) - Executes commands directly in Unity Editor
 3. **Python Client** (`unity_mcp_client.py`) - Test client for development
+
+### Supported AI IDEs
+
+- ✅ **Claude Desktop** (Claude Code) - Official Anthropic desktop app
+- ✅ **Claude Code CLI** - Command-line interface
+- ✅ **Cursor** - AI-powered code editor
+- ✅ **Windsurf** - AI development environment
+- ✅ **Cline** (formerly Claude Dev) - VS Code extension
+- ✅ **Any MCP-compatible client** - Standard MCP protocol
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Unity 2022.3+ 
+- Unity 2022.3+
 - Node.js 18+
-- Windsurf IDE
+- An MCP-compatible AI IDE (Claude Code, Cursor, Windsurf, Cline, etc.)
 
 ### Installation
 
@@ -49,26 +58,32 @@ Windsurf IDE ←→ Node.js MCP Server ←→ Unity Editor C# Plugin
    cd ..
    ```
 
-3. **Configure Windsurf MCP**:
-   Add to `~/.config/windsurf/mcp.json`:
+3. **Configure Your AI IDE**:
+
+   Configuration varies by IDE. See [CLIENT_CONFIGS.md](./CLIENT_CONFIGS.md) for detailed examples.
+
+   **Quick Example** (Claude Desktop):
+   Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
    ```json
    {
      "mcpServers": {
        "unity-mcp": {
          "command": "node",
-         "args": ["./Server/build/index.js"],
-         "cwd": "/path/to/Windsurf_Unity_MCP",
+         "args": ["/absolute/path/to/Windsurf_Unity_MCP/Server/build/index.js"],
          "env": {
            "NODE_ENV": "production",
            "UNITY_PORT": "8090"
-         },
-         "description": "Unity Editor integration for Windsurf IDE",
-         "enabled": true
+         }
        }
      }
    }
    ```
-   **Note**: Replace `/path/to/Windsurf_Unity_MCP` with the actual absolute path to your cloned repository.
+
+   **For other IDEs**, see [CLIENT_CONFIGS.md](./CLIENT_CONFIGS.md):
+   - Claude Code CLI
+   - Cursor
+   - Windsurf
+   - Cline
 
 4. **Install Unity Plugin**:
    - Open Unity Editor with your project
@@ -77,11 +92,11 @@ Windsurf IDE ←→ Node.js MCP Server ←→ Unity Editor C# Plugin
    - Enter: `https://github.com/isekream/Windsurf_Unity_MCP.git?path=/Unity`
 
 5. **Start the Unity MCP Server**:
-   - In Unity: `Tools > Windsurf MCP > Server Window`
+   - In Unity: `Window > MCP Server`
    - Click `Start Server`
    - Verify status shows "Running" at http://localhost:8090
 
-6. **Restart Windsurf IDE** to load the MCP server
+6. **Restart Your AI IDE** to load the MCP server
 
 ## 🎯 Available Tools (40 Total)
 
@@ -137,7 +152,9 @@ Windsurf IDE ←→ Node.js MCP Server ←→ Unity Editor C# Plugin
 
 ## 💡 Usage Examples
 
-### Natural Language Commands in Windsurf
+### Natural Language Commands
+
+Ask your AI IDE:
 
 ```
 "Analyze my Unity project and show me the structure"
@@ -274,9 +291,9 @@ python3 unity_mcp_client.py your.tool '{"param": "value"}'
    - Check Node.js server logs for tool registration
    - Ensure tool name format matches (category.action)
 
-4. **MCP not appearing in Windsurf**:
-   - Restart Windsurf IDE after configuration changes
-   - Check MCP configuration file syntax
+4. **MCP not appearing in your IDE**:
+   - Restart your AI IDE after configuration changes
+   - Check MCP configuration file syntax (see [CLIENT_CONFIGS.md](./CLIENT_CONFIGS.md))
    - Verify Node.js server builds without errors
 
 ### Diagnostic Commands
@@ -288,7 +305,10 @@ curl -X POST http://localhost:8090 -H "Content-Type: application/json" -d '{"id"
 # Check Node.js server status
 node Server/build/index.js --test
 
-# Validate MCP configuration
+# Validate MCP configuration (adjust path for your IDE)
+# Claude Desktop (macOS):
+cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | jq .
+# Windsurf:
 cat ~/.config/windsurf/mcp.json | jq .
 ```
 
@@ -337,8 +357,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## 🙏 Acknowledgments
 
 - Unity Technologies for the comprehensive Editor API
-- Model Context Protocol (MCP) specification
-- Windsurf IDE team for MCP integration
+- Anthropic for the Model Context Protocol (MCP) specification
+- AI IDE teams (Claude Code, Cursor, Windsurf, Cline) for MCP integration
 - Open source contributors and beta testers
 
 ## 📞 Support

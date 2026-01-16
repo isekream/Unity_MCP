@@ -2,7 +2,7 @@
 
 ## 🔒 Security Best Practices
 
-When setting up and using the Windsurf Unity MCP, follow these security guidelines:
+When setting up and using the Unity MCP, follow these security guidelines:
 
 ### 🏠 Local Development Only
 

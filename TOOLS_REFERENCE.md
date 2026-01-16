@@ -1,6 +1,6 @@
 # 🛠️ Unity MCP Tools Reference
 
-Complete reference for all 40 Unity MCP tools available through Windsurf IDE integration.
+Complete reference for all 40 Unity MCP tools available through MCP-compatible AI IDEs (Claude Code, Cursor, Windsurf, Cline, etc.).
 
 ## 📋 Table of Contents
 
@@ -39,7 +39,7 @@ python3 unity_mcp_client.py project.analyze
 python3 unity_mcp_client.py project.analyze '{"includeAssets": true}'
 ```
 
-**Windsurf Commands**:
+**Example Commands**:
 - "Analyze my Unity project structure"
 - "Show me project details and settings"
 - "Give me a comprehensive project overview"
@@ -57,7 +57,7 @@ python3 unity_mcp_client.py project.analyze '{"includeAssets": true}'
 python3 unity_mcp_client.py project.getInfo
 ```
 
-**Windsurf Commands**:
+**Example Commands**:
 - "What's the basic info about this project?"
 - "Show me project name and version"
 
@@ -96,7 +96,7 @@ python3 unity_mcp_client.py project.setSettings '{"companyName": "MyStudio", "pr
 python3 unity_mcp_client.py project.listScenes
 ```
 
-**Windsurf Commands**:
+**Example Commands**:
 - "List all scenes in the project"
 - "Show me the scene hierarchy"
 
@@ -164,7 +164,7 @@ python3 unity_mcp_client.py scene.createGameObject '{"name": "TestCube", "primit
 python3 unity_mcp_client.py scene.createGameObject '{"name": "PhysicsCube", "primitive": "Cube", "components": ["Rigidbody"]}'
 ```
 
-**Windsurf Commands**:
+**Example Commands**:
 - "Create a cube at position (0, 5, 0)"
 - "Add a sphere with physics components"
 - "Create a player character object"

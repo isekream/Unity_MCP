@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Windsurf Unity MCP Installation Script
+# Unity MCP Installation Script
 # Safe for public sharing - contains no personal information
 
-echo "🚀 Installing Windsurf Unity MCP..."
+echo "🚀 Installing Unity MCP..."
 echo ""
 
 # Check requirements
@@ -49,8 +49,8 @@ cd ..
 # Verify installation
 echo ""
 echo "🔍 Verifying installation..."
-if command -v windsurf-unity-mcp &> /dev/null; then
-    echo "✅ windsurf-unity-mcp command available at: $(which windsurf-unity-mcp)"
+if command -v unity-mcp &> /dev/null; then
+    echo "✅ unity-mcp command available at: $(which unity-mcp)"
 else
     echo "⚠️  Global command not found in PATH"
     echo "   You may need to add npm global bin to your PATH:"
@@ -73,7 +73,7 @@ if [ -f "$GLOBAL_MCP_CONFIG" ]; then
     echo "   {"
     echo "     \"mcpServers\": {"
     echo "       \"unity-mcp\": {"
-    echo "         \"command\": \"windsurf-unity-mcp\","
+    echo "         \"command\": \"unity-mcp\","
     echo "         \"env\": {"
     echo "           \"NODE_ENV\": \"production\","
     echo "           \"UNITY_PORT\": \"8090\""
@@ -88,7 +88,7 @@ else
 {
   "mcpServers": {
     "unity-mcp": {
-      "command": "windsurf-unity-mcp",
+      "command": "unity-mcp",
       "env": {
         "NODE_ENV": "production",
         "UNITY_PORT": "8090"
@@ -109,8 +109,8 @@ echo "📋 Next steps:"
 echo "1. Open Unity Editor with any project"
 echo "2. Install Unity package via Package Manager:"
 echo "   Window > Package Manager > + > Add package from git URL"
-echo "   https://github.com/isekream/Windsurf_Unity_MCP.git?path=/Unity"
-echo "3. Start Unity MCP server: Tools > Windsurf MCP > Server Window"
+echo "   https://github.com/isekream/Unity_MCP.git?path=/Unity"
+echo "3. Start Unity MCP server: Tools > Unity MCP > Server Window"
 echo "4. Restart Windsurf IDE"
 echo "5. Start using Unity commands in Windsurf!"
 echo ""

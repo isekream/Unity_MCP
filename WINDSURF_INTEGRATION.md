@@ -1,4 +1,4 @@
-# 🎮 Windsurf Unity MCP Integration Guide
+# 🎮 Unity MCP Integration Guide for Windsurf
 
 **For Windsurf IDE**: Complete reference for Unity MCP tools integration.
 

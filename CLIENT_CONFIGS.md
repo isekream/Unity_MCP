@@ -28,7 +28,7 @@ This guide provides configuration examples for connecting Unity MCP Server to va
   "mcpServers": {
     "unity-mcp": {
       "command": "node",
-      "args": ["/absolute/path/to/Windsurf_Unity_MCP/Server/build/index.js"],
+      "args": ["/absolute/path/to/Unity_MCP/Server/build/index.js"],
       "env": {
         "NODE_ENV": "production",
         "UNITY_PORT": "8090"
@@ -42,7 +42,7 @@ This guide provides configuration examples for connecting Unity MCP Server to va
 
 1. **Build the server**:
    ```bash
-   cd /path/to/Windsurf_Unity_MCP/Server
+   cd /path/to/Unity_MCP/Server
    npm install
    npm run build
    ```
@@ -50,7 +50,7 @@ This guide provides configuration examples for connecting Unity MCP Server to va
 2. **Edit configuration**:
    - Open the configuration file in your preferred text editor
    - Add the Unity MCP configuration
-   - Replace `/absolute/path/to/Windsurf_Unity_MCP` with your actual project path
+   - Replace `/absolute/path/to/Unity_MCP` with your actual project path
 
 3. **Restart Claude Desktop**:
    - Completely quit and restart the application
@@ -75,7 +75,7 @@ This guide provides configuration examples for connecting Unity MCP Server to va
   "mcpServers": {
     "unity-mcp": {
       "command": "node",
-      "args": ["/absolute/path/to/Windsurf_Unity_MCP/Server/build/index.js"],
+      "args": ["/absolute/path/to/Unity_MCP/Server/build/index.js"],
       "env": {
         "NODE_ENV": "production",
         "UNITY_PORT": "8090",
@@ -121,8 +121,8 @@ This guide provides configuration examples for connecting Unity MCP Server to va
   "mcpServers": {
     "unity-mcp": {
       "command": "node",
-      "args": ["/absolute/path/to/Windsurf_Unity_MCP/Server/build/index.js"],
-      "cwd": "/absolute/path/to/Windsurf_Unity_MCP",
+      "args": ["/absolute/path/to/Unity_MCP/Server/build/index.js"],
+      "cwd": "/absolute/path/to/Unity_MCP",
       "env": {
         "NODE_ENV": "production",
         "UNITY_PORT": "8090"
@@ -141,7 +141,7 @@ This guide provides configuration examples for connecting Unity MCP Server to va
 
 2. **Build and configure**:
    ```bash
-   cd /path/to/Windsurf_Unity_MCP/Server
+   cd /path/to/Unity_MCP/Server
    npm install
    npm run build
    ```
@@ -186,7 +186,7 @@ This guide provides configuration examples for connecting Unity MCP Server to va
 
 1. **Quick setup**:
    ```bash
-   cd /path/to/Windsurf_Unity_MCP
+   cd /path/to/Unity_MCP
 
    # Install dependencies and build
    cd Server
@@ -198,7 +198,7 @@ This guide provides configuration examples for connecting Unity MCP Server to va
    ```
 
 2. **Open in Windsurf**:
-   - Open the Windsurf_Unity_MCP folder in Windsurf
+   - Open the Unity_MCP folder in Windsurf
    - The MCP server will start automatically
    - Look for MCP connection indicator in the IDE
 
@@ -223,7 +223,7 @@ Add to your `.vscode/settings.json`:
   "cline.mcpServers": {
     "unity-mcp": {
       "command": "node",
-      "args": ["/absolute/path/to/Windsurf_Unity_MCP/Server/build/index.js"],
+      "args": ["/absolute/path/to/Unity_MCP/Server/build/index.js"],
       "env": {
         "NODE_ENV": "production",
         "UNITY_PORT": "8090"
@@ -242,7 +242,7 @@ Add to your `.vscode/settings.json`:
 
 2. **Build and configure**:
    ```bash
-   cd /path/to/Windsurf_Unity_MCP/Server
+   cd /path/to/Unity_MCP/Server
    npm install
    npm run build
    ```
@@ -302,7 +302,7 @@ All configurations support these environment variables:
 
 **Absolute paths** (recommended for global configs):
 ```json
-"args": ["/Users/username/Projects/Windsurf_Unity_MCP/Server/build/index.js"]
+"args": ["/Users/username/Projects/Unity_MCP/Server/build/index.js"]
 ```
 
 **Relative paths** (for project-level configs):
@@ -315,17 +315,17 @@ All configurations support these environment variables:
 
 **macOS/Linux**:
 ```json
-"args": ["/home/user/Windsurf_Unity_MCP/Server/build/index.js"]
+"args": ["/home/user/Unity_MCP/Server/build/index.js"]
 ```
 
 **Windows**:
 ```json
-"args": ["C:\\Users\\Username\\Windsurf_Unity_MCP\\Server\\build\\index.js"]
+"args": ["C:\\Users\\Username\\Unity_MCP\\Server\\build\\index.js"]
 ```
 
 Or use forward slashes (Windows supports this):
 ```json
-"args": ["C:/Users/Username/Windsurf_Unity_MCP/Server/build/index.js"]
+"args": ["C:/Users/Username/Unity_MCP/Server/build/index.js"]
 ```
 
 ---
@@ -390,7 +390,7 @@ Or use forward slashes (Windows supports this):
 1. **Use absolute paths** for troubleshooting:
    ```bash
    # Get absolute path
-   cd /path/to/Windsurf_Unity_MCP
+   cd /path/to/Unity_MCP
    pwd  # Copy this path
    ```
 

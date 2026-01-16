@@ -13,7 +13,7 @@ Your Unity MCP is globally configured and will work with **ALL Unity projects**.
 - Click the `+` button → `Add package from git URL...`
 - Paste this URL:
   ```
-  https://github.com/isekream/Windsurf_Unity_MCP.git?path=/Unity
+  https://github.com/isekream/Unity_MCP.git?path=/Unity
   ```
 - Click `Add`
 
@@ -42,7 +42,7 @@ You can now use your AI IDE with natural language commands like:
 
 ## 💡 Pro Tips
 
-1. **Keep this folder**: Don't move or delete the `Windsurf_Unity_MCP` folder - the global config points to it
+1. **Keep this folder**: Don't move or delete the `Unity_MCP` folder - the global config points to it
 2. **Auto-start Unity server**: Enable "Auto Start Server" in the Unity MCP Server Window for convenience
 3. **Check Unity Console**: If something doesn't work, check Unity Console for error messages
 4. **Port conflicts**: If port 8090 is busy, change it in the Unity Server Window

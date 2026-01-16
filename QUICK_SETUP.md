@@ -13,7 +13,7 @@ Get Unity MCP running with all 40 tools in 5 minutes!
 ### 1. Build the Node.js Server (2 minutes)
 
 ```bash
-cd Windsurf_Unity_MCP/Server
+cd Unity_MCP/Server
 npm install
 npm run build
 ```
@@ -31,7 +31,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   "mcpServers": {
     "unity-mcp": {
       "command": "node",
-      "args": ["/absolute/path/to/Windsurf_Unity_MCP/Server/build/index.js"],
+      "args": ["/absolute/path/to/Unity_MCP/Server/build/index.js"],
       "env": {
         "NODE_ENV": "production",
         "UNITY_PORT": "8090"
@@ -51,7 +51,7 @@ Add to `~/Library/Application Support/Cursor/User/globalStorage/cursor-mcp/confi
   "mcpServers": {
     "unity-mcp": {
       "command": "node",
-      "args": ["/absolute/path/to/Windsurf_Unity_MCP/Server/build/index.js"],
+      "args": ["/absolute/path/to/Unity_MCP/Server/build/index.js"],
       "cwd": "/absolute/path/to/Windsurf_Unity_MCP",
       "env": {
         "NODE_ENV": "production",
@@ -95,7 +95,7 @@ Add to `.vscode/settings.json` in your project:
   "cline.mcpServers": {
     "unity-mcp": {
       "command": "node",
-      "args": ["/absolute/path/to/Windsurf_Unity_MCP/Server/build/index.js"],
+      "args": ["/absolute/path/to/Unity_MCP/Server/build/index.js"],
       "env": {
         "NODE_ENV": "production",
         "UNITY_PORT": "8090"
@@ -113,7 +113,7 @@ Add to `.vscode/settings.json` in your project:
 1. Open Unity Editor with any project
 2. Go to `Window > Package Manager`
 3. Click `+` → `Add package from git URL...`
-4. Enter: `https://github.com/isekream/Windsurf_Unity_MCP.git?path=/Unity`
+4. Enter: `https://github.com/isekream/Unity_MCP.git?path=/Unity`
 5. Click `Add`
 
 ### 4. Start Unity MCP Server (30 seconds)

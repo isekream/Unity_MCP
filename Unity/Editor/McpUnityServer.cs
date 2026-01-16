@@ -13,15 +13,15 @@ namespace Windsurf.Unity.MCP
 {
     /// <summary>
     /// Main MCP server for Unity Editor that handles HTTP communication
-    /// and coordinates tool execution between Windsurf and Unity.
+    /// and coordinates tool execution between AI IDEs and Unity.
     /// </summary>
     [InitializeOnLoad]
     public class McpUnityServer : EditorWindow
     {
-        private const string MENU_PATH = "Tools/Windsurf MCP/Server Window";
-        private const string PREF_SERVER_PORT = "WindsurfMCP_ServerPort";
-        private const string PREF_AUTO_START = "WindsurfMCP_AutoStart";
-        private const string PREF_REQUEST_TIMEOUT = "WindsurfMCP_RequestTimeout";
+        private const string MENU_PATH = "Tools/Unity MCP/Server Window";
+        private const string PREF_SERVER_PORT = "UnityMCP_ServerPort";
+        private const string PREF_AUTO_START = "UnityMCP_AutoStart";
+        private const string PREF_REQUEST_TIMEOUT = "UnityMCP_RequestTimeout";
         
         private static McpUnityServer instance;
         private static HttpListener httpListener;
@@ -50,7 +50,7 @@ namespace Windsurf.Unity.MCP
         [MenuItem(MENU_PATH, false, 1)]
         public static void OpenWindow()
         {
-            instance = GetWindow<McpUnityServer>("Windsurf MCP Server");
+            instance = GetWindow<McpUnityServer>("Unity MCP Server");
             instance.minSize = new Vector2(400, 300);
             instance.Show();
         }
@@ -73,7 +73,7 @@ namespace Windsurf.Unity.MCP
             EditorGUILayout.Space();
             
             // Header
-            EditorGUILayout.LabelField("Windsurf Unity MCP Server", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Unity MCP Server", EditorStyles.boldLabel);
             EditorGUILayout.Space();
             
             // Server Configuration
@@ -490,7 +490,7 @@ namespace Windsurf.Unity.MCP
                 }
             }
             
-            Debug.Log($"[Windsurf MCP] {message}");
+            Debug.Log($"[Unity MCP] {message}");
         }
 
         public static void LogError(string message)
@@ -503,7 +503,7 @@ namespace Windsurf.Unity.MCP
                 instance.logText = string.Join("\n", instance.logs);
             }
             
-            Debug.LogError($"[Windsurf MCP] {message}");
+            Debug.LogError($"[Unity MCP] {message}");
         }
 
         private void ClearLogs()
@@ -514,7 +514,7 @@ namespace Windsurf.Unity.MCP
 
         private void ExportLogs()
         {
-            string path = EditorUtility.SaveFilePanel("Export Logs", "", "windsurf_mcp_logs.txt", "txt");
+            string path = EditorUtility.SaveFilePanel("Export Logs", "", "unity_mcp_logs.txt", "txt");
             if (!string.IsNullOrEmpty(path))
             {
                 System.IO.File.WriteAllText(path, logText);

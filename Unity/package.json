@@ -5,9 +5,9 @@
   "description": "Model Context Protocol (MCP) server integration for seamless Unity Editor control from AI IDEs (Claude Code, Cursor, Windsurf, Cline, etc.). Enables natural language commands to manipulate Unity projects, scenes, assets, and build settings through AI assistance.",
   "unity": "2022.3",
   "unityRelease": "0f1",
-  "documentationUrl": "https://github.com/isekream/Windsurf_Unity_MCP#readme",
-  "changelogUrl": "https://github.com/isekream/Windsurf_Unity_MCP/blob/main/CHANGELOG.md",
-  "licensesUrl": "https://github.com/isekream/Windsurf_Unity_MCP/blob/main/LICENSE",
+  "documentationUrl": "https://github.com/isekream/Unity_MCP#readme",
+  "changelogUrl": "https://github.com/isekream/Unity_MCP/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/isekream/Unity_MCP/blob/main/LICENSE",
   "keywords": [
     "mcp",
     "model-context-protocol",
@@ -26,7 +26,7 @@
   "author": {
     "name": "Unity MCP Team",
     "email": "support@unitymcp.com",
-    "url": "https://github.com/isekream/Windsurf_Unity_MCP"
+    "url": "https://github.com/isekream/Unity_MCP"
   },
   "type": "tool",
   "hideInEditor": false,

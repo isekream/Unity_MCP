@@ -46,8 +46,8 @@ AI IDE (Claude Code/Cursor/Windsurf/Cline) ←→ Node.js MCP Server ←→ Unit
 
 1. **Clone this repository**:
    ```bash
-   git clone https://github.com/isekream/Windsurf_Unity_MCP.git
-   cd Windsurf_Unity_MCP
+   git clone https://github.com/isekream/Unity_MCP.git
+   cd Unity_MCP
    ```
 
 2. **Install Node.js dependencies**:
@@ -69,7 +69,7 @@ AI IDE (Claude Code/Cursor/Windsurf/Cline) ←→ Node.js MCP Server ←→ Unit
      "mcpServers": {
        "unity-mcp": {
          "command": "node",
-         "args": ["/absolute/path/to/Windsurf_Unity_MCP/Server/build/index.js"],
+         "args": ["/absolute/path/to/Unity_MCP/Server/build/index.js"],
          "env": {
            "NODE_ENV": "production",
            "UNITY_PORT": "8090"
@@ -89,7 +89,7 @@ AI IDE (Claude Code/Cursor/Windsurf/Cline) ←→ Node.js MCP Server ←→ Unit
    - Open Unity Editor with your project
    - Go to `Window > Package Manager`
    - Click `+` → `Add package from git URL...`
-   - Enter: `https://github.com/isekream/Windsurf_Unity_MCP.git?path=/Unity`
+   - Enter: `https://github.com/isekream/Unity_MCP.git?path=/Unity`
 
 5. **Start the Unity MCP Server**:
    - In Unity: `Window > MCP Server`
@@ -315,7 +315,7 @@ cat ~/.config/windsurf/mcp.json | jq .
 ## 📁 Project Structure
 
 ```
-Windsurf_Unity_MCP/
+Unity_MCP/
 ├── Server/                    # Node.js MCP Server
 │   ├── src/                   # TypeScript source code
 │   │   ├── tools/            # Tool implementations
@@ -363,10 +363,10 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 📞 Support
 
-- 🐛 **Issues**: [GitHub Issues](https://github.com/isekream/Windsurf_Unity_MCP/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/isekream/Windsurf_Unity_MCP/discussions)
-- 📧 **Email**: support@windsurfmcp.com
-- 📖 **Docs**: [Wiki](https://github.com/isekream/Windsurf_Unity_MCP/wiki)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/isekream/Unity_MCP/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/isekream/Unity_MCP/discussions)
+- 📧 **Email**: support@unitymcp.com
+- 📖 **Docs**: [Wiki](https://github.com/isekream/Unity_MCP/wiki)
 
 ---
 

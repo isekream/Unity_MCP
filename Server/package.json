@@ -38,12 +38,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/isekream/Windsurf_Unity_MCP.git"
+    "url": "https://github.com/isekream/Unity_MCP.git"
   },
   "bugs": {
-    "url": "https://github.com/isekream/Windsurf_Unity_MCP/issues"
+    "url": "https://github.com/isekream/Unity_MCP/issues"
   },
-  "homepage": "https://github.com/isekream/Windsurf_Unity_MCP#readme",
+  "homepage": "https://github.com/isekream/Unity_MCP#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "zod": "^3.22.4",

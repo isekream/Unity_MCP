@@ -1,11 +1,11 @@
 {
-  "name": "@windsurf/unity-mcp",
+  "name": "@unity/mcp-server",
   "version": "1.0.0",
-  "description": "A Model Context Protocol (MCP) server for seamless Unity Editor integration with Windsurf IDE",
+  "description": "A Model Context Protocol (MCP) server for seamless Unity Editor integration with AI IDEs (Claude Code, Cursor, Windsurf, Cline, etc.)",
   "main": "build/index.js",
   "type": "module",
   "bin": {
-    "windsurf-unity-mcp": "build/index.js"
+    "unity-mcp": "build/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -25,12 +25,16 @@
     "mcp",
     "model-context-protocol",
     "unity",
+    "claude-code",
+    "cursor",
     "windsurf",
+    "cline",
+    "anthropic",
     "ai",
     "game-development",
     "ide-integration"
   ],
-  "author": "Windsurf Unity MCP Team",
+  "author": "Unity MCP Team",
   "license": "MIT",
   "repository": {
     "type": "git",

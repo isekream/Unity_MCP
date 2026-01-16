@@ -1,12 +1,12 @@
-# Windsurf Unity MCP Setup Guide
+# Unity MCP Setup Guide
 
-This guide will help you set up the Windsurf Unity MCP integration for seamless Unity Editor control from Windsurf IDE.
+This guide will help you set up the Unity MCP integration for seamless Unity Editor control from MCP-compatible AI IDEs (Claude Code, Cursor, AI IDE, Cline, etc.).
 
 ## Prerequisites
 
 - **Unity Editor 2022.3 LTS or later**
 - **Node.js 18+ and npm**
-- **Windsurf IDE** with MCP support
+- **An MCP-compatible AI IDE** (Claude Code, Cursor, AI IDE, Cline, etc.)
 - **Git** for version control
 
 ## Installation
@@ -14,8 +14,8 @@ This guide will help you set up the Windsurf Unity MCP integration for seamless 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/isekream/Windsurf_Unity_MCP.git
-cd Windsurf_Unity_MCP
+git clone https://github.com/isekream/AI IDE_Unity_MCP.git
+cd AI IDE_Unity_MCP
 ```
 
 ### 2. Install Node.js Dependencies
@@ -37,7 +37,7 @@ npm run build
 2. Open your Unity project
 3. In the Package Manager, click the `+` button
 4. Select "Add package from disk..."
-5. Navigate to `Windsurf_Unity_MCP/Unity/package.json`
+5. Navigate to `AI IDE_Unity_MCP/Unity/package.json`
 6. Click "Open"
 
 Alternatively, you can copy the `Unity` folder contents to your project's `Packages` directory.
@@ -47,26 +47,30 @@ Alternatively, you can copy the `Unity` folder contents to your project's `Packa
 ### 1. Unity Setup
 
 1. Open Unity Editor
-2. Go to `Tools > Windsurf MCP > Server Window`
-3. Configure the WebSocket port (default: 8090)
+2. Go to `Window > MCP Server`
+3. Configure the HTTP port (default: 8090)
 4. Enable "Auto Start Server" if desired
 5. Click "Start Server"
 
 The Unity MCP server should now be running and ready to accept connections.
 
-### 2. Windsurf Configuration
+### 2. AI IDE Configuration
 
-1. Open Windsurf IDE
-2. Open your project settings
-3. Navigate to MCP configuration
-4. Add the Unity MCP server configuration:
+Configuration varies by IDE. See [CLIENT_CONFIGS.md](../CLIENT_CONFIGS.md) for detailed setup instructions for:
+- Claude Desktop (Claude Code)
+- Claude Code CLI
+- Cursor
+- AI IDE
+- Cline
+
+**Example Configuration** (Generic):
 
 ```json
 {
   "mcpServers": {
-    "unity": {
+    "unity-mcp": {
       "command": "node",
-      "args": ["./Server/build/index.js"],
+      "args": ["/absolute/path/to/AI IDE_Unity_MCP/Server/build/index.js"],
       "env": {
         "UNITY_PORT": "8090",
         "REQUEST_TIMEOUT": "10"
@@ -76,7 +80,7 @@ The Unity MCP server should now be running and ready to accept connections.
 }
 ```
 
-**Note**: This configuration assumes you're running Windsurf from the project root directory. For global installation, use the `windsurf-unity-mcp` command instead.
+**Note**: Replace `/absolute/path/to/AI IDE_Unity_MCP` with your actual project path.
 
 ### 3. Environment Variables
 
@@ -92,12 +96,13 @@ You can configure the MCP server using these environment variables:
 
 1. Ensure Unity Editor is running with the MCP server started
 2. Check the Unity MCP Server window for connection status
-3. Look for "Connected Clients: 1" when Windsurf connects
+3. Server should show "Running" status
 
-### 2. Test Windsurf Integration
+### 2. Test AI IDE Integration
 
-1. Open Windsurf IDE
-2. Try asking the AI assistant: "Analyze my Unity project"
+1. Open your AI IDE
+2. Try asking the AI assistant: "What Unity MCP tools are available?"
+3. Try: "Analyze my Unity project"
 3. The AI should be able to provide information about your Unity project
 
 ### 3. Available Commands
@@ -120,10 +125,10 @@ Once set up, you can use natural language commands like:
 - **Firewall settings**: Make sure your firewall allows connections on the configured port
 - **Unity console errors**: Check the Unity Console for any error messages
 
-#### Windsurf Can't Connect
+#### AI IDE Can't Connect
 
 - **Server running**: Verify the Unity MCP server is running (green status in Unity)
-- **Path configuration**: Double-check the path to the MCP server in Windsurf config
+- **Path configuration**: Double-check the path to the MCP server in AI IDE config
 - **Node.js version**: Ensure you're using Node.js 18 or later
 - **Build status**: Make sure you've built the server with `npm run build`
 
@@ -141,7 +146,7 @@ Enable debug logging by setting the environment variable:
 export LOG_LEVEL=debug
 ```
 
-Or in Windsurf configuration:
+Or in AI IDE configuration:
 
 ```json
 {
@@ -160,7 +165,7 @@ Or in Windsurf configuration:
 
 ### Getting Help
 
-1. **Check logs**: Review both Unity Console and Windsurf logs for error messages
+1. **Check logs**: Review both Unity Console and AI IDE logs for error messages
 2. **Unity MCP Server window**: Use the built-in logging and export functionality
 3. **GitHub Issues**: Report bugs or ask questions on the project repository
 4. **Documentation**: Refer to the API documentation for advanced usage

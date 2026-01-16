@@ -1,6 +1,6 @@
 # Basic Usage Examples
 
-This document provides examples of how to use the Windsurf Unity MCP integration for common Unity development tasks.
+This document provides examples of how to use the Unity MCP integration for common Unity development tasks with AI IDEs (Claude Code, Cursor, Windsurf, Cline, etc.).
 
 ## Project Analysis
 

@@ -18,10 +18,10 @@ import { createCodeTools } from './tools/code-tools.js';
 import { createBuildTools } from './tools/build-tools.js';
 import type { Tool } from './types/index.js';
 
-const SERVER_NAME = 'windsurf-unity-mcp';
+const SERVER_NAME = 'unity-mcp';
 const SERVER_VERSION = '1.0.0';
 
-class WindsurfUnityMCPServer {
+class UnityMCPServer {
   private server: Server;
   private unityClient: UnityClient;
   private tools: Map<string, Tool> = new Map();
@@ -181,12 +181,12 @@ class WindsurfUnityMCPServer {
 
 // Main execution
 async function main(): Promise<void> {
-  const server = new WindsurfUnityMCPServer();
-  
+  const server = new UnityMCPServer();
+
   try {
     await server.start();
   } catch (error) {
-    logger.error('Failed to start Windsurf Unity MCP Server:', error);
+    logger.error('Failed to start Unity MCP Server:', error);
     process.exit(1);
   }
 }

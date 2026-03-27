@@ -328,7 +328,8 @@ namespace Windsurf.Unity.MCP
             RegisterTool(new AssetManagerTool());
             RegisterTool(new CodeGenerationTool());
             RegisterTool(new BuildManagerTool());
-            
+            RegisterTool(new ViewportCaptureTool());
+
             LogMessage($"Initialized {tools.Count} MCP tools");
         }
 

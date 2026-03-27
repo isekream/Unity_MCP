@@ -1,6 +1,6 @@
 # 🛠️ Unity MCP Tools Reference
 
-Complete reference for all 40 Unity MCP tools available through MCP-compatible AI IDEs (Claude Code, Cursor, Windsurf, Cline, etc.).
+Complete reference for all 41 Unity MCP tools available through MCP-compatible AI IDEs (Claude Code, Cursor, Windsurf, Cline, etc.).
 
 ## 📋 Table of Contents
 
@@ -273,6 +273,37 @@ python3 unity_mcp_client.py scene.createGameObject '{"name": "PhysicsCube", "pri
   "additive": false
 }
 ```
+
+### 16. `scene.capture`
+**Description**: Capture a screenshot of the Unity Scene or Game view for visual inspection
+**Unity Tool**: `scene_capture`
+
+**Parameters**:
+```json
+{
+  "view": "game",          // "game" (camera view) or "scene" (editor view)
+  "width": 960,            // Image width in pixels (64-3840)
+  "height": 540,           // Image height in pixels (64-2160)
+  "cameraName": "",        // Specific camera name (empty = Main Camera)
+  "includeGizmos": false   // Include gizmos in scene view capture
+}
+```
+
+**Returns**: PNG image (as MCP image content) + metadata (camera position, FOV, scene view pivot, etc.)
+
+**Example Usage**:
+```
+"Capture the game view so I can see how the scene looks"
+"Take a screenshot of the scene view at 1920x1080"
+"Show me what the SecurityCamera sees"
+```
+
+**Key Features**:
+- Returns actual image data that the AI can see and analyze
+- Game view renders from any camera (Main Camera by default)
+- Scene view captures the editor viewport with optional gizmos
+- Includes camera/viewport metadata for spatial context
+- Enables visual feedback loops: place objects → capture → adjust → repeat
 
 ---
 

@@ -4,7 +4,8 @@ A powerful Model Context Protocol (MCP) server that enables seamless Unity Edito
 
 ## ✨ Features
 
-- 🎯 **40+ Unity Tools** - Comprehensive project, scene, asset, code, and build management
+- 🎯 **41 Unity Tools** - Comprehensive project, scene, asset, code, and build management
+- 👁️ **Viewport Capture** - AI can "see" the Unity scene, enabling visual feedback loops
 - 🔄 **Real-time Integration** - Direct Unity Editor communication via HTTP API
 - 🤖 **AI-Powered** - Natural language commands for complex Unity operations
 - 🛠️ **Extensible** - Easy to add custom tools for specific project needs
@@ -109,7 +110,7 @@ AI IDE (Claude Code/Cursor/Windsurf/Cline) ←→ Node.js MCP Server ←→ Unit
 - `project.setBuildTarget` - Change active build target platform
 - `project.refreshAssets` - Force refresh of project assets database
 
-### Scene Operations (8 tools)
+### Scene Operations (9 tools)
 - `scene.createGameObject` - Create GameObjects with components and hierarchy
 - `scene.modifyComponent` - Add, remove, or update component properties
 - `scene.query` - Query scene hierarchy and find objects by criteria
@@ -118,6 +119,7 @@ AI IDE (Claude Code/Cursor/Windsurf/Cline) ←→ Node.js MCP Server ←→ Unit
 - `scene.moveGameObject` - Transform position, rotation, scale, and parenting
 - `scene.save` - Save current scene or all open scenes
 - `scene.load` - Open and switch between project scenes
+- `scene.capture` - Capture viewport screenshot for AI visual inspection
 
 ### Asset Management (8 tools)
 - `assets.import` - Import files with custom import settings

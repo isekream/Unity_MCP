@@ -329,6 +329,7 @@ namespace Windsurf.Unity.MCP
             RegisterTool(new CodeGenerationTool());
             RegisterTool(new BuildManagerTool());
             RegisterTool(new ViewportCaptureTool());
+            RegisterTool(new PlayModeTool());
 
             LogMessage($"Initialized {tools.Count} MCP tools");
         }
@@ -418,9 +419,50 @@ namespace Windsurf.Unity.MCP
 
             string toolCategory = methodParts[0];
             string toolAction = methodParts[1];
-            string toolName = $"{toolCategory}_{toolAction}";
+            string exactToolName = $"{toolCategory}_{toolAction}";
 
-            return ExecuteTool(toolName, request.Params);
+            // Try exact match first (e.g., "scene_capture")
+            if (instance != null && instance.tools.ContainsKey(exactToolName))
+            {
+                return ExecuteTool(exactToolName, request.Params);
+            }
+
+            // Fall back to category-level tool and inject action into params.
+            // This routes "playmode.enter" → tool "playmode" with action="enter",
+            // and "scene.createGameObject" → tool "scene_manipulate" with action injected.
+            foreach (var kvp in instance.tools)
+            {
+                if (kvp.Value.Category == toolCategory)
+                {
+                    // Inject the action into the params so the tool can dispatch
+                    var paramsWithAction = InjectAction(request.Params, toolAction);
+                    return ExecuteTool(kvp.Key, paramsWithAction);
+                }
+            }
+
+            return McpResponse.CreateError($"No tool found for method: {request.Method}");
+        }
+
+        private static object InjectAction(object parameters, string action)
+        {
+            try
+            {
+                // Convert params to a mutable dictionary and add the action
+                string json = parameters != null
+                    ? JsonConvert.SerializeObject(parameters)
+                    : "{}";
+                var dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(json)
+                           ?? new Dictionary<string, object>();
+                if (!dict.ContainsKey("action"))
+                {
+                    dict["action"] = action;
+                }
+                return dict;
+            }
+            catch
+            {
+                return parameters;
+            }
         }
 
         private static void OnPlayModeStateChanged(PlayModeStateChange state)

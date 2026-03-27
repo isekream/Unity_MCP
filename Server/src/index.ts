@@ -16,6 +16,7 @@ import { createSceneTools } from './tools/scene-tools.js';
 import { createAssetTools } from './tools/asset-tools.js';
 import { createCodeTools } from './tools/code-tools.js';
 import { createBuildTools } from './tools/build-tools.js';
+import { createViewportTools } from './tools/viewport-tools.js';
 import type { Tool } from './types/index.js';
 
 const SERVER_NAME = 'unity-mcp';
@@ -52,6 +53,7 @@ class UnityMCPServer {
       createAssetTools(this.unityClient),
       createCodeTools(this.unityClient),
       createBuildTools(this.unityClient),
+      createViewportTools(this.unityClient),
     ];
 
     for (const tools of toolCategories) {
@@ -99,9 +101,16 @@ class UnityMCPServer {
         }
 
         const result = await tool.execute(args ?? {});
-        
+
         logger.debug(`Tool ${name} executed successfully`);
-        
+
+        // Support tools that return rich MCP content (e.g., images)
+        if (result && typeof result === 'object' && '_mcpContent' in (result as Record<string, unknown>)) {
+          return {
+            content: (result as Record<string, unknown>)._mcpContent as Array<{ type: string; text?: string; data?: string; mimeType?: string }>,
+          };
+        }
+
         return {
           content: [
             {

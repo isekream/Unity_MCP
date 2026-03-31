@@ -48,16 +48,16 @@ export class UnityClient {
     return this.isConnectedFlag;
   }
 
-  public async sendRequest(method: string, params?: Record<string, unknown>): Promise<unknown> {
+  public async sendRequest(method: string, params?: Record<string, unknown>, timeoutMs?: number): Promise<unknown> {
     if (!this.isConnectedFlag) {
       throw new Error('Not connected to Unity Editor');
     }
 
     try {
-      return await this.makeRequest(method, params);
+      return await this.makeRequest(method, params, timeoutMs);
     } catch (error) {
       console.error(`Request failed for method ${method}:`, error);
-      
+
       // Mark as disconnected on request failure
       this.isConnectedFlag = false;
       throw error;
@@ -71,7 +71,7 @@ export class UnityClient {
     });
   }
 
-  private async makeRequest(method: string, params?: Record<string, unknown>): Promise<unknown> {
+  private async makeRequest(method: string, params?: Record<string, unknown>, timeoutMs?: number): Promise<unknown> {
     const message: UnityMessage = {
       id: this.generateId(),
       type: 'request',
@@ -85,7 +85,7 @@ export class UnityClient {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(message),
-      signal: AbortSignal.timeout(config.requestTimeout),
+      signal: AbortSignal.timeout(timeoutMs ?? config.requestTimeout),
     });
 
     if (!response.ok) {

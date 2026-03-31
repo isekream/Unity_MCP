@@ -33,6 +33,22 @@ namespace Windsurf.Unity.MCP
         }
 
         [Serializable]
+        private class ObservationTarget
+        {
+            public string gameObjectName;
+            public int instanceId = 0;
+            public string componentType;
+            public string propertyName;
+        }
+
+        [Serializable]
+        private class SimulateInputParams
+        {
+            public string key;
+            public float holdDuration = -1f;
+        }
+
+        [Serializable]
         private class PlayModeParams
         {
             // Common
@@ -72,6 +88,17 @@ namespace Windsurf.Unity.MCP
 
             // TimeScale
             public float timeScale = 1f;
+
+            // Observe
+            public ObservationTarget[] targets;
+            public float duration = 2f;
+            public int sampleRate = 10;
+            public SimulateInputParams simulateInput;
+
+            // SimulateInput (standalone)
+            public string key;
+            // action is already defined above (reused)
+            public float holdDuration = 0.1f;
         }
 
         public override object Execute(object parameters)
@@ -96,6 +123,8 @@ namespace Windsurf.Unity.MCP
                     "getConsoleLogs" => GetConsoleLogs(args),
                     "getRuntimeInfo" => GetRuntimeInfo(args),
                     "setTimeScale" => SetTimeScale(args),
+                    "observe" => ObserveRuntime(args),
+                    "simulateInput" => SimulateInput(args),
                     _ => CreateErrorResponse($"Unknown playmode action: {args.action}")
                 };
             }
@@ -765,6 +794,693 @@ namespace Windsurf.Unity.MCP
                 newTimeScale = scale
             }, $"Time scale set to {scale}x");
         }
+
+        // ─── Runtime Observation ─────────────────────────────────────────
+
+        private static ObservationSession activeObservation;
+
+        private class ObservationSession
+        {
+            public List<ObservationTarget> targets;
+            public float duration;
+            public float sampleInterval;
+            public float startTime;
+            public float nextSampleTime;
+            public float inputReleaseTime;
+            public KeyCode simulatedKey;
+            public bool inputActive;
+            public List<Dictionary<string, object>> samples;
+            public Dictionary<string, List<object>> valuesByTarget;
+            public bool isComplete;
+            public object result;
+            public AsyncToolResult asyncResult;
+            public PlayModeTool parentTool;
+        }
+
+        private object ObserveRuntime(PlayModeParams args)
+        {
+            if (!EditorApplication.isPlaying)
+            {
+                return CreateErrorResponse("Not in Play Mode. Use playmode.enter first.");
+            }
+
+            if (activeObservation != null && !activeObservation.isComplete)
+            {
+                return CreateErrorResponse("An observation is already in progress. Wait for it to complete.");
+            }
+
+            if (args.targets == null || args.targets.Length == 0)
+            {
+                return CreateErrorResponse("No observation targets specified.");
+            }
+
+            float duration = Mathf.Clamp(args.duration, 0.1f, 8f);
+            int sampleRate = Mathf.Clamp(args.sampleRate, 1, 30);
+
+            // Validate targets exist before starting
+            var validatedTargets = new List<ObservationTarget>();
+            foreach (var target in args.targets)
+            {
+                GameObject go = FindGameObject(target.gameObjectName, target.instanceId);
+                if (go == null)
+                {
+                    return CreateErrorResponse(
+                        $"GameObject not found: {target.gameObjectName ?? $"ID:{target.instanceId}"}");
+                }
+
+                if (!string.IsNullOrEmpty(target.componentType))
+                {
+                    Component comp = FindComponent(go, target.componentType);
+                    if (comp == null)
+                    {
+                        return CreateErrorResponse(
+                            $"Component '{target.componentType}' not found on '{go.name}'");
+                    }
+                }
+
+                validatedTargets.Add(target);
+            }
+
+            // Parse simulated input key
+            KeyCode simKey = KeyCode.None;
+            float inputHoldDuration = duration;
+            if (args.simulateInput != null && !string.IsNullOrEmpty(args.simulateInput.key))
+            {
+                simKey = ParseKeyCode(args.simulateInput.key);
+                if (simKey == KeyCode.None)
+                {
+                    return CreateErrorResponse($"Unknown key: '{args.simulateInput.key}'");
+                }
+                if (args.simulateInput.holdDuration >= 0)
+                {
+                    inputHoldDuration = Mathf.Min(args.simulateInput.holdDuration, duration);
+                }
+            }
+
+            // Ensure game is running (not paused)
+            if (EditorApplication.isPaused)
+            {
+                EditorApplication.isPaused = false;
+            }
+
+            // Create async result that ExecuteTool will poll on the background thread
+            var asyncResult = new AsyncToolResult
+            {
+                TimeoutSeconds = duration + 5f
+            };
+
+            activeObservation = new ObservationSession
+            {
+                targets = validatedTargets,
+                duration = duration,
+                sampleInterval = 1f / sampleRate,
+                startTime = Time.realtimeSinceStartup,
+                nextSampleTime = 0f,
+                simulatedKey = simKey,
+                inputActive = simKey != KeyCode.None,
+                inputReleaseTime = Time.realtimeSinceStartup + inputHoldDuration,
+                samples = new List<Dictionary<string, object>>(),
+                valuesByTarget = new Dictionary<string, List<object>>(),
+                isComplete = false,
+                result = null,
+                asyncResult = asyncResult,
+                parentTool = this
+            };
+
+            foreach (var t in validatedTargets)
+            {
+                string key = TargetKey(t);
+                activeObservation.valuesByTarget[key] = new List<object>();
+            }
+
+            // Start input simulation if requested
+            if (activeObservation.inputActive)
+            {
+                SendKeyEvent(activeObservation.simulatedKey, true);
+            }
+
+            EditorApplication.update += ObservationTick;
+
+            McpUnityServer.LogMessage($"[playmode] Started observation: {validatedTargets.Count} targets, {duration}s, {sampleRate} Hz");
+
+            // Return AsyncToolResult — ExecuteTool will poll it on the background thread
+            // while EditorApplication.update drives ObservationTick on the main thread
+            return asyncResult;
+        }
+
+        private static void ObservationTick()
+        {
+            if (activeObservation == null || activeObservation.isComplete)
+            {
+                EditorApplication.update -= ObservationTick;
+                return;
+            }
+
+            var obs = activeObservation;
+            float elapsed = Time.realtimeSinceStartup - obs.startTime;
+
+            // Release input if hold duration exceeded
+            if (obs.inputActive && Time.realtimeSinceStartup >= obs.inputReleaseTime)
+            {
+                SendKeyEvent(obs.simulatedKey, false);
+                obs.inputActive = false;
+            }
+
+            // Check if observation is complete
+            if (elapsed >= obs.duration)
+            {
+                if (obs.inputActive)
+                {
+                    SendKeyEvent(obs.simulatedKey, false);
+                    obs.inputActive = false;
+                }
+
+                EditorApplication.update -= ObservationTick;
+                var compiledResult = obs.parentTool.CompileObservationResult(obs);
+                obs.result = compiledResult;
+                obs.isComplete = true;
+
+                // Signal async completion to ExecuteTool's background thread
+                if (obs.asyncResult != null)
+                {
+                    obs.asyncResult.Result = compiledResult;
+                    obs.asyncResult.IsComplete = true;
+                }
+                return;
+            }
+
+            // Sample at the configured rate
+            if (elapsed < obs.nextSampleTime) return;
+            obs.nextSampleTime = elapsed + obs.sampleInterval;
+
+            var sample = new Dictionary<string, object>
+            {
+                ["frame"] = Time.frameCount,
+                ["time"] = Math.Round(Time.time, 4),
+                ["elapsed"] = Math.Round(elapsed, 4)
+            };
+
+            var values = new Dictionary<string, object>();
+            foreach (var target in obs.targets)
+            {
+                string key = TargetKey(target);
+                object val = SampleProperty(target);
+                values[key] = val;
+                obs.valuesByTarget[key].Add(val);
+            }
+
+            sample["values"] = values;
+            obs.samples.Add(sample);
+        }
+
+        private static object SampleProperty(ObservationTarget target)
+        {
+            GameObject go = null;
+            if (target.instanceId != 0)
+                go = EditorUtility.InstanceIDToObject(target.instanceId) as GameObject;
+            if (go == null && !string.IsNullOrEmpty(target.gameObjectName))
+                go = GameObject.Find(target.gameObjectName);
+            if (go == null) return null;
+
+            // If no component specified, sample transform position by default
+            if (string.IsNullOrEmpty(target.componentType))
+            {
+                return SerializeValueStatic(go.transform.position);
+            }
+
+            Component comp = null;
+            foreach (var c in go.GetComponents<Component>())
+            {
+                if (c == null) continue;
+                if (c.GetType().Name.Equals(target.componentType, StringComparison.OrdinalIgnoreCase) ||
+                    c.GetType().FullName.Equals(target.componentType, StringComparison.OrdinalIgnoreCase))
+                {
+                    comp = c;
+                    break;
+                }
+            }
+            if (comp == null) return null;
+
+            // If no property specified, return all properties of the component
+            if (string.IsNullOrEmpty(target.propertyName))
+            {
+                return SampleAllComponentProperties(comp);
+            }
+
+            return ReadSingleProperty(comp, target.propertyName);
+        }
+
+        private static object ReadSingleProperty(Component comp, string propertyName)
+        {
+            // Handle well-known types with direct accessors for performance
+            if (comp is Transform t)
+            {
+                return propertyName.ToLower() switch
+                {
+                    "position" => Vec3Static(t.position),
+                    "localposition" => Vec3Static(t.localPosition),
+                    "rotation" or "eulerangles" => Vec3Static(t.eulerAngles),
+                    "localrotation" or "localeulerangles" => Vec3Static(t.localEulerAngles),
+                    "localscale" => Vec3Static(t.localScale),
+                    "forward" => Vec3Static(t.forward),
+                    "up" => Vec3Static(t.up),
+                    "right" => Vec3Static(t.right),
+                    _ => null
+                };
+            }
+
+            if (comp is Rigidbody rb)
+            {
+                return propertyName.ToLower() switch
+                {
+                    "velocity" or "linearvelocity" => Vec3Static(rb.linearVelocity),
+                    "angularvelocity" => Vec3Static(rb.angularVelocity),
+                    "position" => Vec3Static(rb.position),
+                    "mass" => rb.mass,
+                    "drag" or "lineardamping" => rb.linearDamping,
+                    "issleeping" => rb.IsSleeping(),
+                    _ => null
+                };
+            }
+
+            if (comp is Rigidbody2D rb2d)
+            {
+                return propertyName.ToLower() switch
+                {
+                    "velocity" or "linearvelocity" => Vec2Static(rb2d.linearVelocity),
+                    "angularvelocity" => rb2d.angularVelocity,
+                    "position" => Vec2Static(rb2d.position),
+                    "mass" => rb2d.mass,
+                    "gravityscale" => rb2d.gravityScale,
+                    "issleeping" => rb2d.IsSleeping(),
+                    _ => null
+                };
+            }
+
+            if (comp is Animator anim)
+            {
+                return propertyName.ToLower() switch
+                {
+                    "speed" => anim.speed,
+                    "normalizedtime" => anim.GetCurrentAnimatorStateInfo(0).normalizedTime,
+                    "isintransition" => anim.IsInTransition(0),
+                    _ => null
+                };
+            }
+
+            // Reflection fallback for custom MonoBehaviours and other components
+            var type = comp.GetType();
+
+            var field = type.GetField(propertyName,
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (field != null)
+            {
+                try { return SerializeValueStatic(field.GetValue(comp)); }
+                catch { return null; }
+            }
+
+            var prop = type.GetProperty(propertyName,
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (prop != null && prop.CanRead && prop.GetIndexParameters().Length == 0)
+            {
+                try { return SerializeValueStatic(prop.GetValue(comp)); }
+                catch { return null; }
+            }
+
+            return null;
+        }
+
+        private static Dictionary<string, object> SampleAllComponentProperties(Component comp)
+        {
+            var props = new Dictionary<string, object>();
+
+            if (comp is Transform t)
+            {
+                props["position"] = Vec3Static(t.position);
+                props["rotation"] = Vec3Static(t.eulerAngles);
+                props["localScale"] = Vec3Static(t.localScale);
+                return props;
+            }
+
+            if (comp is Rigidbody rb)
+            {
+                props["velocity"] = Vec3Static(rb.linearVelocity);
+                props["angularVelocity"] = Vec3Static(rb.angularVelocity);
+                props["position"] = Vec3Static(rb.position);
+                return props;
+            }
+
+            if (comp is Rigidbody2D rb2d)
+            {
+                props["velocity"] = Vec2Static(rb2d.linearVelocity);
+                props["position"] = Vec2Static(rb2d.position);
+                return props;
+            }
+
+            // Reflection for custom scripts
+            var type = comp.GetType();
+            foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
+            {
+                try { props[field.Name] = SerializeValueStatic(field.GetValue(comp)); }
+                catch { /* skip */ }
+            }
+
+            return props;
+        }
+
+        private object CompileObservationResult(ObservationSession obs)
+        {
+            var summary = new Dictionary<string, object>();
+
+            foreach (var kvp in obs.valuesByTarget)
+            {
+                string targetKey = kvp.Key;
+                var values = kvp.Value;
+                if (values.Count == 0) continue;
+
+                var targetSummary = new Dictionary<string, object>
+                {
+                    ["sampleCount"] = values.Count
+                };
+
+                // Try to compute numeric summary for Vector3 values
+                if (values[0] is Dictionary<string, object> firstDict && firstDict.ContainsKey("x"))
+                {
+                    var vectors = new List<Vector3>();
+                    foreach (var v in values)
+                    {
+                        if (v is Dictionary<string, object> dict)
+                        {
+                            float x = Convert.ToSingle(dict.GetValueOrDefault("x", 0f));
+                            float y = Convert.ToSingle(dict.GetValueOrDefault("y", 0f));
+                            float z = Convert.ToSingle(dict.GetValueOrDefault("z", 0f));
+                            vectors.Add(new Vector3(x, y, z));
+                        }
+                    }
+
+                    if (vectors.Count > 0)
+                    {
+                        var first = vectors[0];
+                        var last = vectors[vectors.Count - 1];
+                        var min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+                        var max = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+                        var sum = Vector3.zero;
+
+                        foreach (var v in vectors)
+                        {
+                            min = Vector3.Min(min, v);
+                            max = Vector3.Max(max, v);
+                            sum += v;
+                        }
+
+                        var mean = sum / vectors.Count;
+                        var delta = last - first;
+
+                        targetSummary["first"] = Vec3(first);
+                        targetSummary["last"] = Vec3(last);
+                        targetSummary["min"] = Vec3(min);
+                        targetSummary["max"] = Vec3(max);
+                        targetSummary["mean"] = Vec3(mean);
+                        targetSummary["delta"] = Vec3(delta);
+                        targetSummary["totalDistance"] = delta.magnitude;
+                    }
+                }
+                else if (values[0] is float || values[0] is double || values[0] is int || values[0] is long)
+                {
+                    // Scalar numeric summary
+                    var nums = new List<float>();
+                    foreach (var v in values)
+                    {
+                        try { nums.Add(Convert.ToSingle(v)); }
+                        catch { /* skip */ }
+                    }
+
+                    if (nums.Count > 0)
+                    {
+                        targetSummary["first"] = nums[0];
+                        targetSummary["last"] = nums[nums.Count - 1];
+                        targetSummary["min"] = nums.Min();
+                        targetSummary["max"] = nums.Max();
+                        targetSummary["mean"] = nums.Average();
+                        targetSummary["delta"] = nums[nums.Count - 1] - nums[0];
+                    }
+                }
+
+                summary[targetKey] = targetSummary;
+            }
+
+            return CreateSuccessResponse(new
+            {
+                observations = obs.samples,
+                summary,
+                duration = obs.duration,
+                totalSamples = obs.samples.Count,
+                inputSimulated = obs.simulatedKey != KeyCode.None ? obs.simulatedKey.ToString() : null
+            }, $"Observation complete: {obs.samples.Count} samples over {obs.duration}s for {obs.targets.Count} target(s)");
+        }
+
+        private static string TargetKey(ObservationTarget t)
+        {
+            string goName = t.gameObjectName ?? $"ID:{t.instanceId}";
+            string comp = t.componentType ?? "Transform";
+            string prop = t.propertyName ?? "*";
+            return $"{goName}/{comp}.{prop}";
+        }
+
+        // ─── Input Simulation ────────────────────────────────────────────
+
+        private object SimulateInput(PlayModeParams args)
+        {
+            if (!EditorApplication.isPlaying)
+            {
+                return CreateErrorResponse("Not in Play Mode. Use playmode.enter first.");
+            }
+
+            if (string.IsNullOrEmpty(args.key))
+            {
+                return CreateErrorResponse("No key specified for input simulation.");
+            }
+
+            KeyCode keyCode = ParseKeyCode(args.key);
+            if (keyCode == KeyCode.None)
+            {
+                return CreateErrorResponse($"Unknown key: '{args.key}'. Use Unity KeyCode names (e.g., 'w', 'space', 'left shift', 'mouse 0').");
+            }
+
+            string inputAction = args.action ?? "tap";
+
+            switch (inputAction)
+            {
+                case "press":
+                    SendKeyEvent(keyCode, true);
+                    LogMessage($"Key pressed: {keyCode}");
+                    return CreateSuccessResponse(new
+                    {
+                        key = keyCode.ToString(),
+                        action = "press",
+                        hint = "Key is held down. Use simulateInput with action='release' to release it."
+                    }, $"Key {keyCode} pressed (held down)");
+
+                case "release":
+                    SendKeyEvent(keyCode, false);
+                    LogMessage($"Key released: {keyCode}");
+                    return CreateSuccessResponse(new
+                    {
+                        key = keyCode.ToString(),
+                        action = "release"
+                    }, $"Key {keyCode} released");
+
+                case "tap":
+                    float hold = Mathf.Clamp(args.holdDuration, 0.01f, 5f);
+                    SendKeyEvent(keyCode, true);
+
+                    // Schedule release after hold duration
+                    float releaseTime = Time.realtimeSinceStartup + hold;
+                    EditorApplication.CallbackFunction releaseCallback = null;
+                    releaseCallback = () =>
+                    {
+                        if (Time.realtimeSinceStartup >= releaseTime)
+                        {
+                            SendKeyEvent(keyCode, false);
+                            EditorApplication.update -= releaseCallback;
+                        }
+                    };
+                    EditorApplication.update += releaseCallback;
+
+                    // Wait for tap to complete
+                    var waitStart = DateTime.Now;
+                    var waitTimeout = TimeSpan.FromSeconds(hold + 1);
+                    while (DateTime.Now - waitStart < waitTimeout)
+                    {
+                        System.Threading.Thread.Sleep(10);
+                        if (Time.realtimeSinceStartup >= releaseTime + 0.05f) break;
+                    }
+
+                    LogMessage($"Key tapped: {keyCode} for {hold}s");
+                    return CreateSuccessResponse(new
+                    {
+                        key = keyCode.ToString(),
+                        action = "tap",
+                        holdDuration = hold
+                    }, $"Key {keyCode} tapped for {hold}s");
+
+                default:
+                    return CreateErrorResponse($"Unknown input action: '{inputAction}'. Use 'press', 'release', or 'tap'.");
+            }
+        }
+
+        private static void SendKeyEvent(KeyCode keyCode, bool isDown)
+        {
+#if ENABLE_INPUT_SYSTEM
+            try
+            {
+                var keyboard = UnityEngine.InputSystem.Keyboard.current;
+                if (keyboard != null)
+                {
+                    var key = KeyCodeToInputSystemKey(keyCode);
+                    if (key != UnityEngine.InputSystem.Key.None)
+                    {
+                        using (var stateEvent = UnityEngine.InputSystem.LowLevel.StateEvent.From(keyboard, out var eventPtr))
+                        {
+                            keyboard[key].WriteValueIntoEvent(isDown ? 1f : 0f, eventPtr);
+                            UnityEngine.InputSystem.InputSystem.QueueEvent(eventPtr);
+                        }
+                        return;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // Fall through to legacy approach
+            }
+#endif
+            // Legacy fallback: send Event to Game view
+            var gameViewType = Type.GetType("UnityEditor.GameView,UnityEditor");
+            if (gameViewType != null)
+            {
+                var gameView = EditorWindow.GetWindow(gameViewType, false, null, false);
+                if (gameView != null)
+                {
+                    var evt = new Event
+                    {
+                        type = isDown ? EventType.KeyDown : EventType.KeyUp,
+                        keyCode = keyCode
+                    };
+                    gameView.SendEvent(evt);
+                }
+            }
+        }
+
+        private static KeyCode ParseKeyCode(string key)
+        {
+            if (string.IsNullOrEmpty(key)) return KeyCode.None;
+
+            // Handle common aliases
+            string normalized = key.ToLower().Trim();
+            switch (normalized)
+            {
+                case "space": return KeyCode.Space;
+                case "enter": case "return": return KeyCode.Return;
+                case "escape": case "esc": return KeyCode.Escape;
+                case "tab": return KeyCode.Tab;
+                case "backspace": return KeyCode.Backspace;
+                case "delete": case "del": return KeyCode.Delete;
+                case "left shift": case "lshift": return KeyCode.LeftShift;
+                case "right shift": case "rshift": return KeyCode.RightShift;
+                case "left ctrl": case "lctrl": case "left control": return KeyCode.LeftControl;
+                case "right ctrl": case "rctrl": case "right control": return KeyCode.RightControl;
+                case "left alt": case "lalt": return KeyCode.LeftAlt;
+                case "right alt": case "ralt": return KeyCode.RightAlt;
+                case "up": case "uparrow": return KeyCode.UpArrow;
+                case "down": case "downarrow": return KeyCode.DownArrow;
+                case "left": case "leftarrow": return KeyCode.LeftArrow;
+                case "right": case "rightarrow": return KeyCode.RightArrow;
+                case "mouse 0": case "mouse0": case "left click": return KeyCode.Mouse0;
+                case "mouse 1": case "mouse1": case "right click": return KeyCode.Mouse1;
+                case "mouse 2": case "mouse2": case "middle click": return KeyCode.Mouse2;
+            }
+
+            // Single character keys (a-z, 0-9)
+            if (normalized.Length == 1)
+            {
+                char c = normalized[0];
+                if (c >= 'a' && c <= 'z')
+                    return (KeyCode)((int)KeyCode.A + (c - 'a'));
+                if (c >= '0' && c <= '9')
+                    return (KeyCode)((int)KeyCode.Alpha0 + (c - '0'));
+            }
+
+            // Function keys
+            if (normalized.StartsWith("f") && int.TryParse(normalized.Substring(1), out int fNum) && fNum >= 1 && fNum <= 15)
+            {
+                return (KeyCode)((int)KeyCode.F1 + (fNum - 1));
+            }
+
+            // Try direct enum parse as last resort
+            if (Enum.TryParse<KeyCode>(key, true, out var parsed))
+                return parsed;
+
+            return KeyCode.None;
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        private static UnityEngine.InputSystem.Key KeyCodeToInputSystemKey(KeyCode keyCode)
+        {
+            // Map common KeyCodes to InputSystem Key enum
+            if (keyCode >= KeyCode.A && keyCode <= KeyCode.Z)
+                return (UnityEngine.InputSystem.Key)((int)UnityEngine.InputSystem.Key.A + (keyCode - KeyCode.A));
+            if (keyCode >= KeyCode.Alpha0 && keyCode <= KeyCode.Alpha9)
+                return (UnityEngine.InputSystem.Key)((int)UnityEngine.InputSystem.Key.Digit0 + (keyCode - KeyCode.Alpha0));
+
+            return keyCode switch
+            {
+                KeyCode.Space => UnityEngine.InputSystem.Key.Space,
+                KeyCode.Return => UnityEngine.InputSystem.Key.Enter,
+                KeyCode.Escape => UnityEngine.InputSystem.Key.Escape,
+                KeyCode.Tab => UnityEngine.InputSystem.Key.Tab,
+                KeyCode.LeftShift => UnityEngine.InputSystem.Key.LeftShift,
+                KeyCode.RightShift => UnityEngine.InputSystem.Key.RightShift,
+                KeyCode.LeftControl => UnityEngine.InputSystem.Key.LeftCtrl,
+                KeyCode.RightControl => UnityEngine.InputSystem.Key.RightCtrl,
+                KeyCode.LeftAlt => UnityEngine.InputSystem.Key.LeftAlt,
+                KeyCode.RightAlt => UnityEngine.InputSystem.Key.RightAlt,
+                KeyCode.UpArrow => UnityEngine.InputSystem.Key.UpArrow,
+                KeyCode.DownArrow => UnityEngine.InputSystem.Key.DownArrow,
+                KeyCode.LeftArrow => UnityEngine.InputSystem.Key.LeftArrow,
+                KeyCode.RightArrow => UnityEngine.InputSystem.Key.RightArrow,
+                _ => UnityEngine.InputSystem.Key.None
+            };
+        }
+#endif
+
+        private static void CleanupObservation()
+        {
+            if (activeObservation != null && activeObservation.inputActive)
+            {
+                SendKeyEvent(activeObservation.simulatedKey, false);
+            }
+            activeObservation = null;
+        }
+
+        // Static versions of serialization helpers for use in static observation callbacks
+        private static object SerializeValueStatic(object value)
+        {
+            if (value == null) return null;
+            var t = value.GetType();
+            if (t.IsPrimitive || t == typeof(string) || t == typeof(decimal)) return value;
+            if (t.IsEnum) return value.ToString();
+            if (value is Vector2 v2) return Vec2Static(v2);
+            if (value is Vector3 v3) return Vec3Static(v3);
+            if (value is Vector4 v4) return new { x = v4.x, y = v4.y, z = v4.z, w = v4.w };
+            if (value is Quaternion q) return new { x = q.x, y = q.y, z = q.z, w = q.w };
+            if (value is Color c) return new { r = c.r, g = c.g, b = c.b, a = c.a };
+            if (value is Bounds b) return new { center = Vec3Static(b.center), size = Vec3Static(b.size) };
+            if (value is UnityEngine.Object uo) return uo != null ? $"{uo.GetType().Name}:{uo.name}" : null;
+            return value.ToString();
+        }
+
+        private static object Vec2Static(Vector2 v) => new Dictionary<string, object> { ["x"] = v.x, ["y"] = v.y };
+        private static object Vec3Static(Vector3 v) => new Dictionary<string, object> { ["x"] = v.x, ["y"] = v.y, ["z"] = v.z };
 
         // ─── Helpers ─────────────────────────────────────────────────────
 

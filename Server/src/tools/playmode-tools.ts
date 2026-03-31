@@ -285,6 +285,121 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
     },
 
     {
+      name: 'playmode.observe',
+      description:
+        'Record a time-series of runtime property values across multiple frames during Play Mode. This is the AI\'s "debugger watch window" — instead of a single snapshot, it captures how values change over time. Use this to verify that gameplay mechanics work correctly (e.g., player moves at expected speed, projectile follows correct arc, health decreases on hit). Optionally simulate input during observation to test input-driven behavior end-to-end.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          targets: {
+            type: 'array',
+            description:
+              'Properties to observe. Each target specifies a GameObject and the component property to track.',
+            items: {
+              type: 'object',
+              properties: {
+                gameObjectName: {
+                  type: 'string',
+                  description: 'Name of the GameObject to observe',
+                },
+                instanceId: {
+                  type: 'number',
+                  description: 'Instance ID of the GameObject (alternative to name)',
+                },
+                componentType: {
+                  type: 'string',
+                  description:
+                    'Component type containing the property (e.g., "Transform", "Rigidbody", "PlayerController")',
+                },
+                propertyName: {
+                  type: 'string',
+                  description:
+                    'Property or field name to observe (e.g., "position", "velocity", "health"). For nested values like Vector3, the full vector is recorded.',
+                },
+              },
+              required: ['componentType', 'propertyName'],
+            },
+            minItems: 1,
+          },
+          duration: {
+            type: 'number',
+            description:
+              'How long to observe in seconds (default 2.0, max 8.0). Must be less than the server request timeout.',
+            default: 2.0,
+          },
+          sampleRate: {
+            type: 'number',
+            description:
+              'Samples per second (default 10, max 30). Higher rates capture faster changes but produce more data.',
+            default: 10,
+          },
+          simulateInput: {
+            type: 'object',
+            description:
+              'Optional: simulate player input during observation. The key is pressed when observation starts and released after holdDuration.',
+            properties: {
+              key: {
+                type: 'string',
+                description:
+                  'Key to simulate (e.g., "w", "space", "left shift", "mouse 0"). Uses Unity KeyCode names.',
+              },
+              holdDuration: {
+                type: 'number',
+                description: 'How long to hold the key in seconds (default: same as observation duration)',
+              },
+            },
+            required: ['key'],
+          },
+        },
+        required: ['targets'],
+        additionalProperties: false,
+      },
+      async execute(args: Record<string, unknown>) {
+        const duration = (args.duration as number) ?? 2.0;
+        const timeoutMs = (duration + 5) * 1000;
+        const result = await unityClient.sendRequest('playmode.observe', args, timeoutMs);
+        return result;
+      },
+    },
+
+    {
+      name: 'playmode.simulateInput',
+      description:
+        'Send simulated input to the running game during Play Mode. Supports keyboard keys and mouse buttons. Use this to trigger player actions (jump, move, shoot) without a human at the keyboard. Works with both legacy Input and the new Input System.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          key: {
+            type: 'string',
+            description:
+              'Key to simulate (e.g., "w", "a", "s", "d", "space", "left shift", "mouse 0", "mouse 1"). Uses Unity KeyCode names.',
+          },
+          action: {
+            type: 'string',
+            enum: ['press', 'release', 'tap'],
+            description:
+              'Input action: "press" holds the key down, "release" releases it, "tap" presses and releases after holdDuration (default).',
+            default: 'tap',
+          },
+          holdDuration: {
+            type: 'number',
+            description:
+              'For "tap" action: how long to hold the key in seconds before releasing (default 0.1).',
+            default: 0.1,
+          },
+        },
+        required: ['key'],
+        additionalProperties: false,
+      },
+      async execute(args: Record<string, unknown>) {
+        const holdDuration = (args.holdDuration as number) ?? 0.1;
+        const timeoutMs = (holdDuration + 5) * 1000;
+        const result = await unityClient.sendRequest('playmode.simulateInput', args, timeoutMs);
+        return result;
+      },
+    },
+
+    {
       name: 'playmode.setTimeScale',
       description:
         'Set the game time scale during Play Mode. Use 0 to freeze time (different from pause — scripts still run), 0.5 for slow-motion, 1 for normal, 2+ for fast-forward. Great for testing animations or debugging timing issues.',

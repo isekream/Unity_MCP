@@ -355,32 +355,71 @@ namespace Windsurf.Unity.MCP
                 McpResponse result = null;
                 Exception resultException = null;
                 bool isComplete = false;
+                AsyncToolResult asyncOp = null;
 
                 // Execute tool on main thread
                 EditorApplication.delayCall += () =>
                 {
                     try
                     {
-                        result = McpResponse.CreateSuccess(tool.Execute(parameters));
-                        LogMessage($"Executed tool: {toolName}");
+                        var execResult = tool.Execute(parameters);
+
+                        if (execResult is AsyncToolResult async)
+                        {
+                            asyncOp = async;
+                        }
+                        else
+                        {
+                            result = McpResponse.CreateSuccess(execResult);
+                            LogMessage($"Executed tool: {toolName}");
+                            isComplete = true;
+                        }
                     }
                     catch (Exception e)
                     {
                         LogError($"Error executing tool '{toolName}': {e.Message}");
                         resultException = e;
-                    }
-                    finally
-                    {
                         isComplete = true;
                     }
                 };
 
                 // Wait for completion (with timeout)
                 var startTime = DateTime.Now;
-                var timeout = TimeSpan.FromSeconds(requestTimeout);
-                
-                while (!isComplete && DateTime.Now - startTime < timeout)
+                var defaultTimeout = TimeSpan.FromSeconds(requestTimeout);
+
+                while (!isComplete && DateTime.Now - startTime < defaultTimeout)
                 {
+                    // Check if async operation was started
+                    if (asyncOp != null)
+                    {
+                        // Extend timeout to accommodate the async operation
+                        var asyncTimeout = TimeSpan.FromSeconds(asyncOp.TimeoutSeconds > 0
+                            ? asyncOp.TimeoutSeconds
+                            : requestTimeout);
+                        var asyncStart = DateTime.Now;
+
+                        while (!asyncOp.IsComplete && DateTime.Now - asyncStart < asyncTimeout)
+                        {
+                            Thread.Sleep(10);
+                        }
+
+                        if (asyncOp.IsComplete)
+                        {
+                            result = asyncOp.Error != null
+                                ? McpResponse.CreateError(asyncOp.Error)
+                                : McpResponse.CreateSuccess(asyncOp.Result);
+                            LogMessage($"Executed async tool: {toolName}");
+                        }
+                        else
+                        {
+                            result = McpResponse.CreateError(
+                                $"Async tool '{toolName}' timed out after {asyncTimeout.TotalSeconds}s");
+                        }
+
+                        isComplete = true;
+                        break;
+                    }
+
                     Thread.Sleep(10);
                 }
 
@@ -577,6 +616,19 @@ namespace Windsurf.Unity.MCP
                 instance.Repaint();
             }
         }
+    }
+
+    /// <summary>
+    /// Returned by tools that need multiple frames to complete (e.g., runtime observation).
+    /// ExecuteTool polls IsComplete on the background thread while EditorApplication.update
+    /// drives progress on the main thread.
+    /// </summary>
+    public class AsyncToolResult
+    {
+        public volatile bool IsComplete;
+        public object Result;
+        public string Error;
+        public float TimeoutSeconds;
     }
 
     /// <summary>

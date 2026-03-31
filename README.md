@@ -4,8 +4,10 @@ A powerful Model Context Protocol (MCP) server that enables seamless Unity Edito
 
 ## ✨ Features
 
-- 🎯 **41 Unity Tools** - Comprehensive project, scene, asset, code, and build management
+- 🎯 **43 Unity Tools** - Comprehensive project, scene, asset, code, and build management
 - 👁️ **Viewport Capture** - AI can "see" the Unity scene, enabling visual feedback loops
+- ⏱️ **Runtime Observation** - AI records property changes over time during Play Mode — the temporal debugger that closes the build→test→fix loop
+- 🎮 **Input Simulation** - AI can play the game by sending keyboard/mouse input during Play Mode
 - 🔄 **Real-time Integration** - Direct Unity Editor communication via HTTP API
 - 🤖 **AI-Powered** - Natural language commands for complex Unity operations
 - 🛠️ **Extensible** - Easy to add custom tools for specific project needs
@@ -18,6 +20,13 @@ A powerful Model Context Protocol (MCP) server that enables seamless Unity Edito
 AI IDE (Claude Code/Cursor/Windsurf/Cline) ←→ Node.js MCP Server ←→ Unity Editor C# Plugin
                     │                                 │                        │
                 AI Commands                    Protocol Bridge            Unity API
+
+Complete AI Development Loop:
+  Build ──→ Run ──→ Observe ──→ Evaluate ──→ Fix ──→ Build
+   │         │        │           │            │
+  code.*   play.*  observe    AI reasons    code.*
+  scene.*  enter   (time-     on temporal   scene.*
+  asset.*          series)    data + stats
 ```
 
 ### Components
@@ -99,9 +108,9 @@ AI IDE (Claude Code/Cursor/Windsurf/Cline) ←→ Node.js MCP Server ←→ Unit
 
 6. **Restart Your AI IDE** to load the MCP server
 
-## 🎯 Available Tools (40 Total)
+## 🎯 Available Tools (43 Total)
 
-### Project Management (6 tools)
+### Project Management (7 tools)
 - `project.analyze` - Comprehensive project analysis and structure overview
 - `project.getInfo` - Get basic project information and settings
 - `project.setSettings` - Modify project configuration and player settings
@@ -141,7 +150,7 @@ AI IDE (Claude Code/Cursor/Windsurf/Cline) ←→ Node.js MCP Server ←→ Unit
 - `code.validate` - Check scripts for common issues and best practices
 - `code.format` - Format and style code according to conventions
 
-### Build & Deploy (10 tools)
+### Build & Deploy (9 tools)
 - `build.configure` - Set build settings, scenes, and platform options
 - `build.execute` - Trigger builds for target platforms
 - `build.runTests` - Execute Unity Test Runner and get results
@@ -151,6 +160,22 @@ AI IDE (Claude Code/Cursor/Windsurf/Cline) ←→ Node.js MCP Server ←→ Unit
 - `build.optimize` - Analyze and optimize build size and performance
 - `build.getConsoleLogs` - Retrieve Unity Console messages and errors
 - `build.profile` - Performance profiling and optimization suggestions
+
+### Play Mode & Runtime (13 tools)
+- `playmode.getState` - Check if game is playing, paused, or stopped
+- `playmode.enter` - Enter Play Mode to run the game
+- `playmode.exit` - Exit Play Mode and return to Edit Mode
+- `playmode.pause` - Pause the running game
+- `playmode.resume` - Resume a paused game
+- `playmode.step` - Advance by N frames for frame-by-frame debugging
+- `playmode.inspectGameObject` - Inspect live runtime component values
+- `playmode.setProperty` - Modify component properties at runtime
+- `playmode.invokeMethod` - Call public methods on components during Play Mode
+- `playmode.getConsoleLogs` - Retrieve runtime console logs and errors
+- `playmode.getRuntimeInfo` - Get FPS, memory, physics stats, and time info
+- `playmode.setTimeScale` - Change game speed (slow-motion, fast-forward)
+- **`playmode.observe`** - **Record property values over time during Play Mode** — the AI's temporal debugger. Tracks transforms, velocities, custom fields across multiple frames and returns structured time-series with summary stats (min/max/mean/delta). Optionally simulates input to test behavior end-to-end.
+- **`playmode.simulateInput`** - **Send keyboard/mouse input to the running game**. Supports press, release, and tap actions. Works with both legacy Input and new Input System.
 
 ## 💡 Usage Examples
 
@@ -173,6 +198,26 @@ Ask your AI IDE:
 
 "Create a fire particle system with appropriate materials"
 → Executes: scene.createGameObject, assets.createMaterial, assets.managePrefabs
+```
+
+### Autonomous Build→Test→Fix Loop
+
+The AI can now build features, play-test them, and self-correct without human intervention:
+
+```
+"Create a WASD player controller, enter play mode, verify the player moves at 5 units/sec"
+→ AI creates script → attaches to Player → enters Play Mode
+→ Executes: playmode.observe with simulateInput key="w"
+→ AI reads time-series: position delta over 2s = (0, 0, 10.1) → speed ≈ 5.05 u/s ✓
+
+"The jump feels too floaty — make it snappier"
+→ AI increases gravity scale → enters Play Mode
+→ Executes: playmode.observe on Rigidbody.velocity with simulateInput key="space"
+→ AI reads velocity curve: apex reached in 0.3s, descent in 0.4s → adjusts until symmetric
+
+"Test that enemies patrol between waypoints correctly"
+→ Executes: playmode.observe on Enemy/Transform.position for 5s at 10Hz
+→ AI reads position time-series: enemy oscillates between (0,0,0) and (10,0,0) ✓
 ```
 
 ### Direct Tool Testing

@@ -421,8 +421,13 @@ namespace Windsurf.Unity.MCP
             string toolAction = methodParts[1];
             string exactToolName = $"{toolCategory}_{toolAction}";
 
+            if (instance == null)
+            {
+                return McpResponse.CreateError("MCP Server window is not open. Open it via Tools > Unity MCP > Server Window.");
+            }
+
             // Try exact match first (e.g., "scene_capture")
-            if (instance != null && instance.tools.ContainsKey(exactToolName))
+            if (instance.tools.ContainsKey(exactToolName))
             {
                 return ExecuteTool(exactToolName, request.Params);
             }

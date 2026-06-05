@@ -21,7 +21,7 @@ export class UnityClient {
     try {
       // Test connection with a simple ping
       await this.makeRequest('test', {});
-      console.log(`Connected to Unity Editor at ${this.baseUrl}`);
+      console.error(`Connected to Unity Editor at ${this.baseUrl}`);
       this.isConnectedFlag = true;
       this.retryAttempts = 0;
     } catch (error) {
@@ -29,7 +29,7 @@ export class UnityClient {
       
       if (this.retryAttempts < this.maxRetryAttempts) {
         this.retryAttempts++;
-        console.log(`Retrying connection (${this.retryAttempts}/${this.maxRetryAttempts})...`);
+        console.error(`Retrying connection (${this.retryAttempts}/${this.maxRetryAttempts})...`);
         
         await new Promise(resolve => setTimeout(resolve, config.retryDelay));
         return this.connect();
@@ -41,7 +41,7 @@ export class UnityClient {
 
   public async disconnect(): Promise<void> {
     this.isConnectedFlag = false;
-    console.log('Disconnected from Unity Editor');
+    console.error('Disconnected from Unity Editor');
   }
 
   public isConnected(): boolean {

@@ -159,10 +159,16 @@ class UnityMCPServer {
       // Validate environment
       validateEnvironment();
 
-      // Connect to Unity
+      // Connect to Unity (non-fatal for standalone/MCP testing mode)
       logger.info('Connecting to Unity Editor...');
-      await this.unityClient.connect();
-      logger.info('Connected to Unity Editor successfully');
+      try {
+        await this.unityClient.connect();
+        logger.info('Connected to Unity Editor successfully');
+      } catch (err: any) {
+        logger.warn('Could not connect to Unity Editor (running in standalone/test mode without Unity):', err?.message || err);
+        // Continue to start the MCP transport anyway so tools can be listed/tested via inspector or clients.
+        // Actual tool calls will fail until Unity is available.
+      }
 
       // Start MCP server
       const transport = new StdioServerTransport();

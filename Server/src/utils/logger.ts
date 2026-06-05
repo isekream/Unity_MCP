@@ -21,7 +21,10 @@ export const logger = winston.createLogger({
   transports: [
     new winston.transports.Console({
       handleExceptions: true,
-      handleRejections: true
+      handleRejections: true,
+      // Send ALL logs to stderr so that stdout remains clean for stdio-based MCP JSON-RPC messages.
+      // This prevents log lines from breaking the MCP transport when the server is spawned by clients like Grok.
+      stderrLevels: ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly']
     })
   ],
   exitOnError: false

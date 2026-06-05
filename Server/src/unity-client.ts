@@ -38,7 +38,7 @@ export class UnityClient {
           `Failed to connect to Unity after ${this.maxRetryAttempts} attempts. ` +
           `Is the Unity Editor open with the UnityMCP package installed? ` +
           `Open Tools > Unity MCP > Server Window in Unity and click "Start Server". ` +
-          `It must be listening on http://localhost:${this.baseUrl.split(':').pop()}/ before tools can execute.`
+          `The Unity MCP bridge must be listening on http://localhost:8090/ (or your configured UNITY_PORT) before any tool can execute.`
         );
       }
     }

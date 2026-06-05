@@ -71,7 +71,7 @@ namespace UnityMCP.Editor
             return CreateSuccessResponse(new
             {
                 name = gameObject.name,
-                instanceId = gameObject.GetInstanceID(),
+                instanceId = gameObject.GetEntityId(), // Use GetEntityId (GetInstanceID is obsolete)
                 scene = gameObject.scene.name
             }, "GameObject created");
         }
@@ -135,7 +135,7 @@ namespace UnityMCP.Editor
                 rootInfo.Add(new
                 {
                     name = root.name,
-                    instanceId = root.GetInstanceID(),
+                    instanceId = root.GetEntityId(), // Use GetEntityId (GetInstanceID is obsolete)
                     childCount = root.transform.childCount,
                     activeSelf = root.activeSelf
                 });

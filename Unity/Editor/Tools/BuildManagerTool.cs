@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 
-namespace Windsurf.Unity.MCP
+namespace UnityMCP.Editor
 {
     /// <summary>
     /// Tool for build management operations

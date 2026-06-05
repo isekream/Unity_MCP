@@ -1,6 +1,6 @@
 # 🛠️ Unity MCP Tools Reference
 
-Complete reference for all 41 Unity MCP tools available through MCP-compatible AI IDEs (Claude Code, Cursor, Windsurf, Cline, etc.).
+Complete reference for all Unity MCP tools available through any MCP-compatible client.
 
 ## 📋 Table of Contents
 

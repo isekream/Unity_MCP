@@ -18,6 +18,8 @@ import { createCodeTools } from './tools/code-tools.js';
 import { createBuildTools } from './tools/build-tools.js';
 import { createViewportTools } from './tools/viewport-tools.js';
 import { createPlayModeTools } from './tools/playmode-tools.js';
+import { createMemoryTools } from './tools/memory-tools.js';
+import { createLabTools } from './tools/lab-tools.js';
 import type { Tool } from './types/index.js';
 
 const SERVER_NAME = 'unity-mcp';
@@ -56,6 +58,8 @@ class UnityMCPServer {
       createBuildTools(this.unityClient),
       createViewportTools(this.unityClient),
       createPlayModeTools(this.unityClient),
+      createMemoryTools(this.unityClient),
+      createLabTools(this.unityClient),
     ];
 
     for (const tools of toolCategories) {

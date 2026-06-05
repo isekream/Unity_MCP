@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 
-namespace Windsurf.Unity.MCP
+namespace UnityMCP.Editor
 {
     /// <summary>
     /// Tool for scene manipulation operations

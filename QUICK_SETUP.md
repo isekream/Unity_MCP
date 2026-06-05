@@ -1,37 +1,29 @@
-# 🚀 Quick Unity MCP Setup Guide
+# Quick Setup Guide
 
-Get Unity MCP running with all 40 tools in 5 minutes!
+**Free and open source** under the MIT License. No paid license required.
 
-## ✅ Prerequisites Check
+Get Unity MCP running with any MCP-compatible client in under 10 minutes.
 
-- [ ] Unity 2022.3+ installed
-- [ ] Node.js 18+ installed
-- [ ] An MCP-compatible AI IDE installed (Claude Code, Cursor, Windsurf, Cline, etc.)
-
-## 🎯 Step-by-Step Setup
-
-### 1. Build the Node.js Server (2 minutes)
+## 1. Install the Server (Node.js)
 
 ```bash
-cd Unity_MCP/Server
+cd UnityMCP/Server
 npm install
 npm run build
 ```
 
-### 2. Configure Your AI IDE (2 minutes)
+## 2. Configure Your MCP Client
 
-**Choose your IDE and follow the configuration:**
+Add a server entry to your client's MCP configuration file. The exact file location is client-specific (common patterns are in CLIENT_CONFIGS.md).
 
-<details>
-<summary><b>Claude Desktop (Claude Code)</b></summary>
+Minimal example:
 
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
 ```json
 {
   "mcpServers": {
     "unity-mcp": {
       "command": "node",
-      "args": ["/absolute/path/to/Unity_MCP/Server/build/index.js"],
+      "args": ["/absolute/path/to/UnityMCP/Server/build/index.js"],
       "env": {
         "NODE_ENV": "production",
         "UNITY_PORT": "8090"
@@ -40,198 +32,31 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   }
 }
 ```
-</details>
 
-<details>
-<summary><b>Cursor</b></summary>
+After editing, **fully restart** your AI client.
 
-Add to `~/Library/Application Support/Cursor/User/globalStorage/cursor-mcp/config.json` (macOS):
-```json
-{
-  "mcpServers": {
-    "unity-mcp": {
-      "command": "node",
-      "args": ["/absolute/path/to/Unity_MCP/Server/build/index.js"],
-      "cwd": "/absolute/path/to/Windsurf_Unity_MCP",
-      "env": {
-        "NODE_ENV": "production",
-        "UNITY_PORT": "8090"
-      }
-    }
-  }
-}
-```
-</details>
+## 3. Install the Unity Package
 
-<details>
-<summary><b>Windsurf</b></summary>
+1. Open your Unity project (2022.3+)
+2. Window → Package Manager
+3. Click + → "Add package from git URL"
+4. Paste: `https://github.com/isekream/Unity_MCP.git?path=/Unity`
 
-Add to `~/.config/windsurf/mcp.json` or `<project-root>/.windsurf/mcp.json`:
-```json
-{
-  "mcpServers": {
-    "unity-mcp": {
-      "command": "node",
-      "args": ["./Server/build/index.js"],
-      "cwd": ".",
-      "env": {
-        "NODE_ENV": "production",
-        "UNITY_PORT": "8090"
-      },
-      "description": "Unity Editor MCP integration - 40 tools for project, scene, asset, code, and build management",
-      "enabled": true
-    }
-  }
-}
-```
-</details>
+## 4. Start the Unity Server
 
-<details>
-<summary><b>Cline (VS Code Extension)</b></summary>
+1. In Unity: **Tools → Unity MCP → Server Window** (or Window > MCP Server in some versions)
+2. Click **Start Server**
+3. Confirm it shows "Running" at http://localhost:8090
 
-Add to `.vscode/settings.json` in your project:
-```json
-{
-  "cline.mcpServers": {
-    "unity-mcp": {
-      "command": "node",
-      "args": ["/absolute/path/to/Unity_MCP/Server/build/index.js"],
-      "env": {
-        "NODE_ENV": "production",
-        "UNITY_PORT": "8090"
-      }
-    }
-  }
-}
-```
-</details>
+## 5. Verify
 
-**📖 For detailed configuration, see [CLIENT_CONFIGS.md](./CLIENT_CONFIGS.md)**
+Ask your AI client something like:
+> "List the Unity MCP tools that are available"
 
-### 3. Install Unity Plugin (1 minute)
+You should see 40+ tools related to project, scene, assets, code, build, and playmode.
 
-1. Open Unity Editor with any project
-2. Go to `Window > Package Manager`
-3. Click `+` → `Add package from git URL...`
-4. Enter: `https://github.com/isekream/Unity_MCP.git?path=/Unity`
-5. Click `Add`
+## Next Steps
 
-### 4. Start Unity MCP Server (30 seconds)
-
-1. In Unity: `Window > MCP Server`
-2. Click **`Start Server`**
-3. Verify status shows **"Running"** (green) at `http://localhost:8090`
-4. Check that **40 tools** are registered
-
-### 5. Test Connection (1 minute)
-
-Run this test command in terminal (replace path with your actual project location):
-```bash
-cd <PATH_TO_WINDSURF_UNITY_MCP>
-python3 unity_mcp_client.py project.getInfo
-```
-
-Expected output: Project information JSON (not timeout/connection errors)
-
-### 6. Restart Your AI IDE (30 seconds)
-
-1. Close your AI IDE completely
-2. Reopen your IDE
-3. Unity MCP tools should now be available
-
-## 🎉 You're Ready!
-
-### Test These Commands in Your AI IDE:
-
-- "What Unity MCP tools are available?"
-- "Analyze my Unity project structure"
-- "Create a cube in the scene"
-- "List all scenes in the project"
-- "Show me the project build settings"
-
-### All 40 Available Tools:
-
-#### Project (7 tools)
-- `project.analyze` - Full project analysis
-- `project.getInfo` - Basic project info
-- `project.setSettings` - Change project settings
-- `project.listScenes` - List all scenes
-- `project.getBuildSettings` - Get build config
-- `project.setBuildTarget` - Change build platform
-- `project.refreshAssets` - Refresh asset database
-
-#### Scene (8 tools)  
-- `scene.createGameObject` - Create objects
-- `scene.modifyComponent` - Edit components
-- `scene.query` - Find objects
-- `scene.selectObjects` - Select objects
-- `scene.deleteGameObject` - Delete objects
-- `scene.moveGameObject` - Move/transform
-- `scene.save` - Save scenes
-- `scene.load` - Load scenes
-
-#### Assets (8 tools)
-- `assets.import` - Import files
-- `assets.createMaterial` - Make materials
-- `assets.managePrefabs` - Handle prefabs
-- `assets.organize` - Organize folders
-- `assets.search` - Find assets
-- `assets.createTexture` - Make textures
-- `packages.manage` - Handle packages
-- `assets.getInfo` - Asset details
-
-#### Code (8 tools)
-- `code.createScript` - Generate scripts
-- `code.analyzeScripts` - Analyze code
-- `code.attachScripts` - Attach to objects
-- `code.findReferences` - Find usage
-- `code.refactor` - Refactor code
-- `code.generateDocumentation` - Make docs
-- `code.validate` - Check code quality
-- `code.format` - Format code
-
-#### Build (9 tools)
-- `build.configure` - Setup builds
-- `build.execute` - Run builds
-- `build.runTests` - Run tests
-- `build.getReport` - Build reports
-- `build.clean` - Clean cache
-- `build.addressables` - Addressables
-- `build.optimize` - Optimize
-- `build.getConsoleLogs` - Console logs
-- `build.profile` - Performance
-
-## 🐛 Troubleshooting
-
-### "Connection refused"
-- ✅ Unity Editor is running
-- ✅ Unity MCP Server shows "Running" 
-- ✅ Port 8090 is available
-
-### "Tool execution timed out"
-- ✅ Unity Editor is responsive (not frozen)
-- ✅ Check Unity Console for errors
-- ✅ Increase timeout in Unity MCP settings
-
-### "MCP not appearing in IDE"
-- ✅ Restart your AI IDE completely
-- ✅ Check MCP configuration file syntax (see [CLIENT_CONFIGS.md](./CLIENT_CONFIGS.md))
-- ✅ Verify paths in configuration are correct and absolute
-- ✅ Ensure Server/build/index.js exists (run `npm run build`)
-
-### "Tool not found"
-- ✅ Unity MCP Server window shows all tools registered
-- ✅ Use correct tool format: `category.action`
-- ✅ Check Node.js server logs
-
-## 📞 Quick Support
-
-**Test Connection**: `curl -X POST http://localhost:8090 -H "Content-Type: application/json" -d '{"id":"test","type":"request","method":"project.getInfo","params":{}}'`
-
-**View All Tools**: Open Unity MCP Server Window in Unity Editor
-
-**Debug Mode**: Enable detailed logging in Unity MCP Server settings
-
----
-
-**🎯 Success Criteria**: You can run `python3 unity_mcp_client.py project.analyze` from your project directory and get project details (not errors). 
+- Read the full [README.md](README.md)
+- See [TOOLS_REFERENCE.md](TOOLS_REFERENCE.md) for all available tools
+- See [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md) for advanced usage

@@ -3,7 +3,7 @@ using System.IO;
 using UnityEngine;
 using UnityEditor;
 
-namespace Windsurf.Unity.MCP
+namespace UnityMCP.Editor
 {
     /// <summary>
     /// Tool for code generation operations

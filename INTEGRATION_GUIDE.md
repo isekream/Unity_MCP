@@ -1,6 +1,6 @@
 # 🎮 Unity MCP Integration Guide
 
-**Complete reference for Unity MCP tools integration with AI IDEs** (Claude Code, Cursor, Windsurf, Cline, and more).
+**Complete reference for Unity MCP tools integration with any MCP-compatible AI client.**
 
 ## 🎯 Available Unity MCP Tools (40 Total)
 
@@ -320,11 +320,7 @@ npm run build
 
 ### 3. Configure Your IDE
 See [CLIENT_CONFIGS.md](./CLIENT_CONFIGS.md) for configuration examples for:
-- Claude Desktop (Claude Code)
-- Claude Code CLI
-- Cursor
-- Windsurf
-- Cline
+- Any MCP client with stdio or HTTP MCP support (see CLIENT_CONFIGS.md)
 
 ### 4. Start Unity & Test
 1. Open Unity Editor

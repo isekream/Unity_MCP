@@ -1,5 +1,7 @@
 # Quick Unity MCP Setup for New Projects
 
+**Free and open source** under the MIT License. No paid license or credentials required.
+
 ## ✅ Global MCP is Now Configured!
 
 Your Unity MCP is globally configured and will work with **ALL Unity projects**.
@@ -14,6 +16,7 @@ Your Unity MCP is globally configured and will work with **ALL Unity projects**.
 - Paste this URL:
   ```
   https://github.com/isekream/Unity_MCP.git?path=/Unity
+  (if the repo requires auth for any reason, use a GitHub token or public access)
   ```
 - Click `Add`
 
@@ -23,7 +26,7 @@ Your Unity MCP is globally configured and will work with **ALL Unity projects**.
 - Verify it shows "Status: Running" and "HTTP URL: http://localhost:8090"
 
 ### 4. Restart Your AI IDE
-- Close and reopen your AI IDE (Claude Code, Cursor, Windsurf, Cline, etc.)
+- Fully restart your AI client after configuration changes
 - The Unity MCP tools will now be available
 
 ## 🎉 That's It!
@@ -49,8 +52,8 @@ You can now use your AI IDE with natural language commands like:
 
 ## 🐛 Troubleshooting
 
-If MCP doesn't appear in Windsurf Tools:
+If the Unity MCP tools do not appear in your client:
 1. Verify Unity MCP server is running (green status)
-2. Restart Windsurf IDE completely
-3. Check `~/.config/windsurf/mcp.json` exists and has correct path
+2. Fully restart your AI client / IDE
+3. Check your client's MCP config file (location varies) exists and contains the correct absolute path to the built server
 4. Run diagnostic: `node <PROJECT_FOLDER>/test-connection.js` 

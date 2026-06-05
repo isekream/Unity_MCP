@@ -1,6 +1,12 @@
 # 🎮 Unity MCP Server
 
-A powerful Model Context Protocol (MCP) server that enables seamless Unity Editor integration with AI IDEs (Claude Code, Cursor, Windsurf, Cline, and more). Control Unity projects through natural language commands powered by AI.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A powerful, **free and open source** Model Context Protocol (MCP) server that enables seamless Unity Editor integration with any MCP-compatible AI client or coding assistant (Claude Code, Cursor, Windsurf, and more). Control Unity projects through natural language commands powered by AI — no subscription or paid license required.
+
+This is a community-driven alternative to the official Unity AI Assistant's MCP integration (which requires a Unity AI subscription for Personal users beyond a short trial).
+
+## ✨ Features
 
 ## ✨ Features
 
@@ -17,7 +23,7 @@ A powerful Model Context Protocol (MCP) server that enables seamless Unity Edito
 ## 🏗️ Architecture
 
 ```
-AI IDE (Claude Code/Cursor/Windsurf/Cline) ←→ Node.js MCP Server ←→ Unity Editor C# Plugin
+MCP Client ←→ Node.js MCP Server ←→ Unity Editor C# Plugin
                     │                                 │                        │
                 AI Commands                    Protocol Bridge            Unity API
 
@@ -35,14 +41,9 @@ Complete AI Development Loop:
 2. **Unity C# Plugin** (`Unity/`) - Executes commands directly in Unity Editor
 3. **Python Client** (`unity_mcp_client.py`) - Test client for development
 
-### Supported AI IDEs
+### Supported Clients
 
-- ✅ **Claude Desktop** (Claude Code) - Official Anthropic desktop app
-- ✅ **Claude Code CLI** - Command-line interface
-- ✅ **Cursor** - AI-powered code editor
-- ✅ **Windsurf** - AI development environment
-- ✅ **Cline** (formerly Claude Dev) - VS Code extension
-- ✅ **Any MCP-compatible client** - Standard MCP protocol
+Any MCP-compatible client or AI coding assistant that supports the Model Context Protocol (stdio or HTTP transport). Common examples include various AI-powered IDEs and extensions. See CLIENT_CONFIGS.md for configuration patterns.
 
 ## 🚀 Quick Start
 
@@ -50,11 +51,11 @@ Complete AI Development Loop:
 
 - Unity 2022.3+
 - Node.js 18+
-- An MCP-compatible AI IDE (Claude Code, Cursor, Windsurf, Cline, etc.)
+- An MCP-compatible AI client or coding assistant
 
 ### Installation
 
-1. **Clone this repository**:
+1. **Clone the repository**:
    ```bash
    git clone https://github.com/isekream/Unity_MCP.git
    cd Unity_MCP
@@ -72,14 +73,14 @@ Complete AI Development Loop:
 
    Configuration varies by IDE. See [CLIENT_CONFIGS.md](./CLIENT_CONFIGS.md) for detailed examples.
 
-   **Quick Example** (Claude Desktop):
-   Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+   **Quick Example**:
+   Add a server entry to your MCP client's configuration file (exact location depends on the client; see [CLIENT_CONFIGS.md](./CLIENT_CONFIGS.md) for common patterns):
    ```json
    {
      "mcpServers": {
        "unity-mcp": {
          "command": "node",
-         "args": ["/absolute/path/to/Unity_MCP/Server/build/index.js"],
+         "args": ["/absolute/path/to/UnityMCP/Server/build/index.js"],
          "env": {
            "NODE_ENV": "production",
            "UNITY_PORT": "8090"
@@ -89,11 +90,7 @@ Complete AI Development Loop:
    }
    ```
 
-   **For other IDEs**, see [CLIENT_CONFIGS.md](./CLIENT_CONFIGS.md):
-   - Claude Code CLI
-   - Cursor
-   - Windsurf
-   - Cline
+   See [CLIENT_CONFIGS.md](./CLIENT_CONFIGS.md) for configuration details for popular clients.
 
 4. **Install Unity Plugin**:
    - Open Unity Editor with your project
@@ -177,6 +174,27 @@ Complete AI Development Loop:
 - **`playmode.observe`** - **Record property values over time during Play Mode** — the AI's temporal debugger. Tracks transforms, velocities, custom fields across multiple frames and returns structured time-series with summary stats (min/max/mean/delta). Optionally simulates input to test behavior end-to-end.
 - **`playmode.simulateInput`** - **Send keyboard/mouse input to the running game**. Supports press, release, and tap actions. Works with both legacy Input and new Input System.
 
+### Persistent Project Intelligence (Memory Layer)
+- `memory.status` - Inspect the current state of the project's long-term memory
+- `memory.rebuild` - Deeply index scripts, design docs, and intent into a queryable model
+- `memory.query` - Ask natural-language questions against accumulated project knowledge and past insights
+- `memory.recordInsight` - Explicitly store design decisions, measured results, and learnings from observations
+- `memory.getDesignDoc` / `memory.updateDesignDoc` - Read and maintain a living design document that captures the "soul" and current truth of the game
+
+This layer gives the AI persistent, project-specific memory and taste that compounds across sessions.
+
+### The Lab: Autonomous Experimentation & Optimization
+
+Built on top of memory + observation, the Lab lets the AI run rigorous, data-driven experiments at scale:
+
+- Define hypotheses and parameter spaces tied to your living design goals
+- Automatically execute dozens of instrumented play sessions using the existing runtime observation and input simulation systems
+- Measure results quantitatively and visually
+- Evolve mechanics toward what actually feels good for *this game*
+- Apply winning variants with full audit trail back into memory
+
+This is the closest thing that currently exists to giving an AI a real game design research lab inside Unity.
+
 ## 💡 Usage Examples
 
 ### Natural Language Commands
@@ -200,9 +218,11 @@ Ask your AI IDE:
 → Executes: scene.createGameObject, assets.createMaterial, assets.managePrefabs
 ```
 
-### Autonomous Build→Test→Fix Loop
+### Autonomous Build→Test→Fix Loop + Accumulated Intelligence
 
-The AI can now build features, play-test them, and self-correct without human intervention:
+The AI can now build features, play-test them, and self-correct without human intervention. More importantly, it can *remember* what worked, what didn't, and why — across many sessions.
+
+After a successful tuning pass using `playmode.observe`, the agent should call `memory.recordInsight` with the measured results and rationale. Over time this creates a living project model that makes every subsequent interaction dramatically more grounded and effective.
 
 ```
 "Create a WASD player controller, enter play mode, verify the player moves at 5 units/sec"
@@ -219,6 +239,29 @@ The AI can now build features, play-test them, and self-correct without human in
 → Executes: playmode.observe on Enemy/Transform.position for 5s at 10Hz
 → AI reads position time-series: enemy oscillates between (0,0,0) and (10,0,0) ✓
 ```
+
+### The Memory Flywheel (Long-term Intelligence)
+
+This is the highest-leverage capability:
+
+1. Agent explores and tunes using `playmode.observe` + `simulateInput`
+2. After every meaningful session, it calls `memory.recordInsight` with the actual measured results
+3. Later (next day, next week, new team member), the agent calls `memory.query` or `memory.suggest`
+4. The suggestions are now grounded in the real history and design intent of *this specific game*
+
+Example flow an advanced agent will follow:
+```
+memory.status
+memory.rebuild
+memory.query "What have we learned about movement feel so far?"
+memory.suggest "Make the coyote time feel more generous without breaking precision"
+... implement ...
+playmode.observe + simulateInput
+memory.recordInsight "Coyote time of 0.18s produced the best player feedback in testing"
+memory.updateDesignDoc (with new known-good values)
+```
+
+Over time this creates a project that genuinely gets better at being worked on by AI.
 
 ### Direct Tool Testing
 
@@ -352,11 +395,7 @@ curl -X POST http://localhost:8090 -H "Content-Type: application/json" -d '{"id"
 # Check Node.js server status
 node Server/build/index.js --test
 
-# Validate MCP configuration (adjust path for your IDE)
-# Claude Desktop (macOS):
-cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | jq .
-# Windsurf:
-cat ~/.config/windsurf/mcp.json | jq .
+# Validate MCP configuration (location is client-specific; see CLIENT_CONFIGS.md)
 ```
 
 ## 📁 Project Structure
@@ -382,6 +421,8 @@ Unity_MCP/
 
 ## 🤝 Contributing
 
+Contributions are welcome from everyone!
+
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-tool`)
 3. Add your tool following the established patterns
@@ -399,20 +440,20 @@ Unity_MCP/
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
 - Unity Technologies for the comprehensive Editor API
 - Anthropic for the Model Context Protocol (MCP) specification
-- AI IDE teams (Claude Code, Cursor, Windsurf, Cline) for MCP integration
-- Open source contributors and beta testers
+- MCP client developers and the Model Context Protocol community for the integration standard
+- Open source contributors, beta testers, and the Unity and AI development community
 
 ## 📞 Support
 
 - 🐛 **Issues**: [GitHub Issues](https://github.com/isekream/Unity_MCP/issues)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/isekream/Unity_MCP/discussions)
-- 📧 **Email**: support@unitymcp.com
+- 📧 **Email**: support@unitymcp.com (or use GitHub issues for faster community support)
 - 📖 **Docs**: [Wiki](https://github.com/isekream/Unity_MCP/wiki)
 
 ---

@@ -9,7 +9,7 @@ using UnityEditor;
 using Newtonsoft.Json;
 using System.IO;
 
-namespace Windsurf.Unity.MCP
+namespace UnityMCP.Editor
 {
     /// <summary>
     /// Main MCP server for Unity Editor that handles HTTP communication
@@ -172,11 +172,11 @@ namespace Windsurf.Unity.MCP
             
             // Configuration Export
             EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField("Windsurf Configuration", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("MCP Configuration", EditorStyles.boldLabel);
             
-            if (GUILayout.Button("Copy Windsurf MCP Config to Clipboard"))
+            if (GUILayout.Button("Copy MCP Server Configuration to Clipboard"))
             {
-                CopyWindsurfConfigToClipboard();
+                CopyMcpConfigToClipboard();
             }
             
             EditorGUILayout.EndVertical();
@@ -330,6 +330,8 @@ namespace Windsurf.Unity.MCP
             RegisterTool(new BuildManagerTool());
             RegisterTool(new ViewportCaptureTool());
             RegisterTool(new PlayModeTool());
+            RegisterTool(new ProjectMemoryTool());
+            RegisterTool(new LabTool());
 
             LogMessage($"Initialized {tools.Count} MCP tools");
         }
@@ -536,16 +538,16 @@ namespace Windsurf.Unity.MCP
             EditorPrefs.SetInt(PREF_REQUEST_TIMEOUT, requestTimeout);
         }
 
-        private void CopyWindsurfConfigToClipboard()
+        private void CopyMcpConfigToClipboard()
         {
             var config = new
             {
                 mcpServers = new
                 {
-                    unity = new
+                    unityMcp = new
                     {
                         command = "node",
-                        args = new[] { "./Server/build/index.js" },
+                        args = new[] { "/absolute/path/to/UnityMCP/Server/build/index.js" },
                         env = new
                         {
                             UNITY_PORT = serverPort.ToString(),
@@ -558,7 +560,7 @@ namespace Windsurf.Unity.MCP
             string jsonConfig = JsonConvert.SerializeObject(config, Formatting.Indented);
             EditorGUIUtility.systemCopyBuffer = jsonConfig;
             
-            LogMessage("Windsurf MCP configuration copied to clipboard");
+            LogMessage("MCP server configuration copied to clipboard");
             ShowNotification(new GUIContent("Configuration copied to clipboard!"));
         }
 

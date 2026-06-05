@@ -34,7 +34,7 @@ Use these patterns in your configurations:
 
 // ✅ Good - Environment variables
 {
-  "command": "windsurf-unity-mcp",
+  "command": "unity-mcp",
   "env": {
     "UNITY_PORT": "8090"
   }
@@ -62,7 +62,7 @@ your-project/
 ├── Server/
 │   └── build/index.js          # ✅ Relative path
 ├── mcp.json                    # ✅ Uses relative paths
-└── .windsurf/mcp.json         # ✅ Uses relative paths
+└── mcp.json (or client-specific)   # Client config location varies
 ```
 
 ### 🌍 Environment Variables

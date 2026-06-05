@@ -1,10 +1,10 @@
 using System;
 using UnityEngine;
 
-namespace Windsurf.Unity.MCP
+namespace UnityMCP.Editor
 {
     /// <summary>
-    /// Base class for all MCP tools that can be executed from Windsurf
+    /// Base class for all MCP tools that can be executed from MCP clients
     /// </summary>
     public abstract class McpToolBase
     {
@@ -27,7 +27,7 @@ namespace Windsurf.Unity.MCP
         /// Execute the tool with the given parameters
         /// </summary>
         /// <param name="parameters">Parameters from the MCP request</param>
-        /// <returns>Result object to send back to Windsurf</returns>
+        /// <returns>Result object to send back to the MCP client</returns>
         public abstract object Execute(object parameters);
         
         /// <summary>

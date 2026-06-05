@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEditor;
 
-namespace Windsurf.Unity.MCP
+namespace UnityMCP.Editor
 {
     /// <summary>
     /// Tool for asset management operations

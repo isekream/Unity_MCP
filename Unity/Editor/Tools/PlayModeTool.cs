@@ -7,7 +7,7 @@ using UnityEditor;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Windsurf.Unity.MCP
+namespace UnityMCP.Editor
 {
     /// <summary>
     /// Tool for controlling Unity Play Mode and inspecting runtime game state.

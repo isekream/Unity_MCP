@@ -8,7 +8,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.Build;
 
-namespace Windsurf.Unity.MCP
+namespace UnityMCP.Editor
 {
     /// <summary>
     /// Tool for analyzing Unity project structure, settings, and configuration

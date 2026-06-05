@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Unity MCP Installation Script
-# Safe for public sharing - contains no personal information
+# Commercial software - license required for use. See LICENSE file.
 
 echo "🚀 Installing Unity MCP..."
 echo ""
@@ -57,62 +57,24 @@ else
     echo "   export PATH=\"$(npm config get prefix)/bin:\$PATH\""
 fi
 
-# Create global Windsurf configuration
+# Note: MCP client configuration is client-specific.
+# After installation, add the unity-mcp server entry to your MCP client's configuration file.
+# See README.md and CLIENT_CONFIGS.md for examples.
 echo ""
-echo "📝 Setting up global Windsurf configuration..."
-
-GLOBAL_CONFIG_DIR="$HOME/.config/windsurf"
-GLOBAL_MCP_CONFIG="$GLOBAL_CONFIG_DIR/mcp.json"
-
-mkdir -p "$GLOBAL_CONFIG_DIR"
-
-if [ -f "$GLOBAL_MCP_CONFIG" ]; then
-    echo "⚠️  Existing Windsurf MCP config found at: $GLOBAL_MCP_CONFIG"
-    echo "   Please manually add the Unity MCP configuration:"
-    echo ""
-    echo "   {"
-    echo "     \"mcpServers\": {"
-    echo "       \"unity-mcp\": {"
-    echo "         \"command\": \"unity-mcp\","
-    echo "         \"env\": {"
-    echo "           \"NODE_ENV\": \"production\","
-    echo "           \"UNITY_PORT\": \"8090\""
-    echo "         },"
-    echo "         \"description\": \"Unity Editor integration for Windsurf IDE\","
-    echo "         \"enabled\": true"
-    echo "       }"
-    echo "     }"
-    echo "   }"
-else
-    cat > "$GLOBAL_MCP_CONFIG" << 'EOF'
-{
-  "mcpServers": {
-    "unity-mcp": {
-      "command": "unity-mcp",
-      "env": {
-        "NODE_ENV": "production",
-        "UNITY_PORT": "8090"
-      },
-      "description": "Unity Editor integration for Windsurf IDE",
-      "enabled": true
-    }
-  }
-}
-EOF
-    echo "✅ Global configuration created at: $GLOBAL_MCP_CONFIG"
-fi
+echo "📝 MCP client configuration is not modified automatically."
+echo "   You will need to add the Unity MCP server to your AI client's MCP settings manually."
 
 echo ""
 echo "🎉 Installation complete!"
 echo ""
 echo "📋 Next steps:"
 echo "1. Open Unity Editor with any project"
-echo "2. Install Unity package via Package Manager:"
+echo "2. Install Unity package via Package Manager (requires commercial license):"
 echo "   Window > Package Manager > + > Add package from git URL"
 echo "   https://github.com/isekream/Unity_MCP.git?path=/Unity"
 echo "3. Start Unity MCP server: Tools > Unity MCP > Server Window"
-echo "4. Restart Windsurf IDE"
-echo "5. Start using Unity commands in Windsurf!"
+echo "4. Configure your MCP client to use the Unity MCP server (see README.md)"
+echo "5. Restart your AI client / IDE"
 echo ""
 echo "📖 For detailed instructions, see:"
 echo "   - README.md for complete setup guide"

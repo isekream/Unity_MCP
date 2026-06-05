@@ -33,18 +33,6 @@
   "testables": [
     "com.unity.mcp-server"
   ],
-  "samples": [
-    {
-      "displayName": "Basic MCP Setup",
-      "description": "Basic setup and configuration examples for Unity MCP integration",
-      "path": "Samples~/BasicSetup"
-    },
-    {
-      "displayName": "Custom Tools",
-      "description": "Examples of creating custom MCP tools for specific project needs",
-      "path": "Samples~/CustomTools"
-    }
-  ],
   "dependencies": {
     "com.unity.nuget.newtonsoft-json": "3.2.1"
   }

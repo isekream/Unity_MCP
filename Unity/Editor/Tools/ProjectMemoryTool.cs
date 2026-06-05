@@ -396,7 +396,7 @@ Do not delete this folder.
 - How progression / mastery works:
 
 ## Known Good Feel (Quantitative)
-- Record real measured values here after successful playtests (e.g. "Player run speed: 7.2 u/s feels perfect", "Jump apex time: 0.38s")
+- Record real measured values here after successful playtests (e.g. ""Player run speed: 7.2 u/s feels perfect"", ""Jump apex time: 0.38s"")
 
 ## Current Tensions & Problems
 - 

@@ -34,7 +34,12 @@ export class UnityClient {
         await new Promise(resolve => setTimeout(resolve, config.retryDelay));
         return this.connect();
       } else {
-        throw new Error(`Failed to connect to Unity after ${this.maxRetryAttempts} attempts`);
+        throw new Error(
+          `Failed to connect to Unity after ${this.maxRetryAttempts} attempts. ` +
+          `Is the Unity Editor open with the UnityMCP package installed? ` +
+          `Open Tools > Unity MCP > Server Window in Unity and click "Start Server". ` +
+          `It must be listening on http://localhost:${this.baseUrl.split(':').pop()}/ before tools can execute.`
+        );
       }
     }
   }

@@ -21,9 +21,10 @@ Your Unity MCP is globally configured and will work with **ALL Unity projects**.
 - Click `Add`
 
 ### 3. Start the Unity MCP Server
-- Go to `Window > MCP Server`
-- Click `Start Server`
-- Verify it shows "Status: Running" and "HTTP URL: http://localhost:8090"
+- In Unity go to **Tools > Unity MCP > Server Window**
+- In the window that opens, click the **Start Server** button
+- Look for log: "MCP Server started on port 8090"
+- It should show status "Running" at http://localhost:8090
 
 ### 4. Restart Your AI IDE
 - Fully restart your AI client after configuration changes

@@ -27,7 +27,7 @@ This guide helps you set up Unity MCP for use with any MCP-compatible AI client.
 
    `https://github.com/isekream/Unity_MCP.git?path=/Unity`
 
-3. Start the Unity MCP Server window inside the Unity Editor and click Start.
+3. In Unity: **Tools > Unity MCP > Server Window**, then click **Start Server**. Confirm "MCP Server started on port 8090".
 
 4. Add the server to your AI client's MCP configuration (see CLIENT_CONFIGS.md).
 

@@ -99,9 +99,10 @@ Any MCP-compatible client or AI coding assistant that supports the Model Context
    - Enter: `https://github.com/isekream/Unity_MCP.git?path=/Unity`
 
 5. **Start the Unity MCP Server**:
-   - In Unity: `Window > MCP Server`
-   - Click `Start Server`
-   - Verify status shows "Running" at http://localhost:8090
+   - In Unity: go to **Tools > Unity MCP > Server Window** (opens the control window)
+   - Click the **Start Server** button
+   - Look for the log message "MCP Server started on port 8090"
+   - The window should show status "Running" at http://localhost:8090
 
 6. **Restart Your AI IDE** to load the MCP server
 

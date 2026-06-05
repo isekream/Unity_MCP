@@ -44,9 +44,9 @@ After editing, **fully restart** your AI client.
 
 ## 4. Start the Unity Server
 
-1. In Unity: **Tools → Unity MCP → Server Window** (or Window > MCP Server in some versions)
+1. In Unity: **Tools → Unity MCP → Server Window**
 2. Click **Start Server**
-3. Confirm it shows "Running" at http://localhost:8090
+3. Confirm the log shows "MCP Server started on port 8090" and status "Running" at http://localhost:8090
 
 ## 5. Verify
 

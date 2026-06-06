@@ -997,7 +997,11 @@ namespace UnityMCP.Editor
         {
             GameObject go = null;
             if (target.instanceId != 0)
-                go = EditorUtility.EntityIdToObject(new UnityEngine.EntityId(target.instanceId)) as GameObject;
+            {
+#pragma warning disable CS0618
+                go = EditorUtility.InstanceIDToObject(target.instanceId) as GameObject;
+#pragma warning restore CS0618
+            }
             if (go == null && !string.IsNullOrEmpty(target.gameObjectName))
                 go = GameObject.Find(target.gameObjectName);
             if (go == null) return null;
@@ -1340,9 +1344,9 @@ namespace UnityMCP.Editor
                     var key = KeyCodeToInputSystemKey(keyCode);
                     if (key != UnityEngine.InputSystem.Key.None)
                     {
-                        // Use InputState.Change for better compatibility with current Input System versions
-                        UnityEngine.InputSystem.InputState.Change(keyboard[key], isDown ? 1f : 0f);
-                        return;
+                        // Modern Input System simulation disabled for broader version compatibility
+                        // (InputState may not be available or signature differs across Input System package versions).
+                        // Fall through to the robust legacy Event-based simulation below.
                     }
                 }
             }
@@ -1485,7 +1489,9 @@ namespace UnityMCP.Editor
         {
             if (instanceId != 0)
             {
-                return EditorUtility.EntityIdToObject(new UnityEngine.EntityId(instanceId)) as GameObject;
+#pragma warning disable CS0618
+                return EditorUtility.InstanceIDToObject(instanceId) as GameObject;
+#pragma warning restore CS0618
             }
 
             if (!string.IsNullOrEmpty(name))

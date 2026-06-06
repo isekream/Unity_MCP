@@ -134,7 +134,7 @@ namespace UnityMCP.Editor
             return CreateSuccessResponse(new
             {
                 experimentId = args.experimentId,
-                trialsScheduled = args.trialCount ?? 12,
+                trialsScheduled = args.trialCount > 0 ? args.trialCount : 12,
                 status = "running",
                 note = "In the full implementation this would execute real play sessions using the existing observation + input simulation systems and store rich quantitative + visual results."
             }, "Trial run initiated (skeleton)");

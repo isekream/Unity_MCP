@@ -337,7 +337,7 @@ namespace UnityMCP.Editor
             var info = new Dictionary<string, object>
             {
                 ["name"] = go.name,
-                ["instanceId"] = go.GetInstanceID(),
+                ["instanceId"] = go.GetEntityId(),
                 ["active"] = go.activeSelf,
                 ["activeInHierarchy"] = go.activeInHierarchy,
                 ["tag"] = go.tag,
@@ -741,7 +741,7 @@ namespace UnityMCP.Editor
                     frameTime = Time.unscaledDeltaTime * 1000f, // ms
                     smoothDeltaTime = Time.smoothDeltaTime * 1000f,
                     totalMemoryMB = (float)System.GC.GetTotalMemory(false) / (1024 * 1024),
-                    activeGameObjects = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None).Length
+                    activeGameObjects = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include).Length
                 };
             }
 
@@ -751,8 +751,8 @@ namespace UnityMCP.Editor
                 {
                     gravity = Vec3(Physics.gravity),
                     simulationMode = Physics.simulationMode.ToString(),
-                    rigidbodyCount = UnityEngine.Object.FindObjectsByType<Rigidbody>(FindObjectsSortMode.None).Length,
-                    rigidbody2DCount = UnityEngine.Object.FindObjectsByType<Rigidbody2D>(FindObjectsSortMode.None).Length
+                    rigidbodyCount = UnityEngine.Object.FindObjectsByType<Rigidbody>(FindObjectsInactive.Include).Length,
+                    rigidbody2DCount = UnityEngine.Object.FindObjectsByType<Rigidbody2D>(FindObjectsInactive.Include).Length
                 };
             }
 
@@ -997,7 +997,7 @@ namespace UnityMCP.Editor
         {
             GameObject go = null;
             if (target.instanceId != 0)
-                go = EditorUtility.InstanceIDToObject(target.instanceId) as GameObject;
+                go = EditorUtility.EntityIdToObject(new UnityEngine.EntityId(target.instanceId)) as GameObject;
             if (go == null && !string.IsNullOrEmpty(target.gameObjectName))
                 go = GameObject.Find(target.gameObjectName);
             if (go == null) return null;
@@ -1340,11 +1340,8 @@ namespace UnityMCP.Editor
                     var key = KeyCodeToInputSystemKey(keyCode);
                     if (key != UnityEngine.InputSystem.Key.None)
                     {
-                        using (var stateEvent = UnityEngine.InputSystem.LowLevel.StateEvent.From(keyboard, out var eventPtr))
-                        {
-                            keyboard[key].WriteValueIntoEvent(isDown ? 1f : 0f, eventPtr);
-                            UnityEngine.InputSystem.InputSystem.QueueEvent(eventPtr);
-                        }
+                        // Use InputState.Change for better compatibility with current Input System versions
+                        UnityEngine.InputSystem.InputState.Change(keyboard[key], isDown ? 1f : 0f);
                         return;
                     }
                 }
@@ -1488,7 +1485,7 @@ namespace UnityMCP.Editor
         {
             if (instanceId != 0)
             {
-                return EditorUtility.InstanceIDToObject(instanceId) as GameObject;
+                return EditorUtility.EntityIdToObject(new UnityEngine.EntityId(instanceId)) as GameObject;
             }
 
             if (!string.IsNullOrEmpty(name))

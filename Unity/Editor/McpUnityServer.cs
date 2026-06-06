@@ -639,9 +639,13 @@ namespace UnityMCP.Editor
     [Serializable]
     public class McpRequest
     {
+        [Newtonsoft.Json.JsonProperty("id")]
         public string Id { get; set; }
+        [Newtonsoft.Json.JsonProperty("type")]
         public string Type { get; set; }
+        [Newtonsoft.Json.JsonProperty("method")]
         public string Method { get; set; }
+        [Newtonsoft.Json.JsonProperty("params")]
         public object Params { get; set; }
     }
 
@@ -651,9 +655,13 @@ namespace UnityMCP.Editor
     [Serializable]
     public class McpResponse
     {
+        [Newtonsoft.Json.JsonProperty("id")]
         public string Id { get; set; }
+        [Newtonsoft.Json.JsonProperty("type")]
         public string Type { get; set; } = "response";
+        [Newtonsoft.Json.JsonProperty("result")]
         public object Result { get; set; }
+        [Newtonsoft.Json.JsonProperty("error")]
         public McpErrorInfo Error { get; set; }
 
         public static McpResponse CreateSuccess(object result)
@@ -676,8 +684,11 @@ namespace UnityMCP.Editor
     [Serializable]
     public class McpErrorInfo
     {
+        [Newtonsoft.Json.JsonProperty("code")]
         public int Code { get; set; }
+        [Newtonsoft.Json.JsonProperty("message")]
         public string Message { get; set; }
+        [Newtonsoft.Json.JsonProperty("data")]
         public object Data { get; set; }
     }
 } 

@@ -23,10 +23,10 @@ export function validateEnvironment(): void {
 
 export function getConfig(): ServerConfig {
   return {
-    unityPort: parseInt(process.env.UNITY_PORT || '8090', 10),
-    requestTimeout: parseInt(process.env.REQUEST_TIMEOUT || '10', 10) * 1000,
-    logLevel: (process.env.LOG_LEVEL as ServerConfig['logLevel']) || 'info',
-    retryAttempts: parseInt(process.env.RETRY_ATTEMPTS || '3', 10),
-    retryDelay: parseInt(process.env.RETRY_DELAY || '1000', 10),
+    unityPort: parseInt(process.env.UNITY_PORT ?? '8090', 10),
+    requestTimeout: parseInt(process.env.REQUEST_TIMEOUT ?? '10', 10) * 1000,
+    logLevel: (process.env.LOG_LEVEL as ServerConfig['logLevel']) ?? 'info',
+    retryAttempts: parseInt(process.env.RETRY_ATTEMPTS ?? '3', 10),
+    retryDelay: parseInt(process.env.RETRY_DELAY ?? '1000', 10),
   };
-} 
+}

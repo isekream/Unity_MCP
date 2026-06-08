@@ -20,40 +20,203 @@ namespace UnityMCP.Editor
         public override string Category => "project";
 
         [Serializable]
-        public class AnalyzeParameters
+        public class ProjectParameters
         {
+            public string action = "analyze";
             public bool includeAssets = false;
             public bool includePackages = true;
             public bool includeScenes = true;
             public bool includeSettings = true;
+            public bool includeDisabled = false;
+            public bool forceReimport = false;
+            public string companyName;
+            public string productName;
+            public string version;
+            public string bundleVersion;
+            public string target;
         }
 
         public override object Execute(object parameters)
         {
             try
             {
-                var args = GetParameters<AnalyzeParameters>(parameters);
-                LogMessage("Starting project analysis...");
+                var args = GetParameters<ProjectParameters>(parameters);
+                var action = McpEditorHelpers.GetAction(parameters, args.action ?? "analyze");
 
-                var projectInfo = new
+                return action switch
                 {
-                    project = GetProjectInfo(),
-                    settings = args.includeSettings ? GetProjectSettings() : null,
-                    scenes = args.includeScenes ? GetSceneInfo() : null,
-                    packages = args.includePackages ? GetPackageInfo() : null,
-                    assets = args.includeAssets ? GetAssetInfo() : null,
-                    buildSettings = GetBuildSettings(),
-                    performance = GetPerformanceMetrics()
+                    "analyze" => RunAnalyze(args),
+                    "get_info" => CreateSuccessResponse(GetProjectInfo(), "Project info retrieved"),
+                    "set_settings" => SetSettings(args),
+                    "list_scenes" => ListScenes(args),
+                    "get_build_settings" => GetBuildSettingsResponse(),
+                    "set_build_target" => SetBuildTarget(args),
+                    "refresh_assets" => RefreshAssets(args),
+                    _ => CreateErrorResponse(
+                        $"Unknown project action '{action}'. Supported: analyze, get_info, set_settings, list_scenes, get_build_settings, set_build_target, refresh_assets")
                 };
-
-                LogMessage("Project analysis completed successfully");
-                return CreateSuccessResponse(projectInfo, "Project analysis completed");
             }
             catch (Exception e)
             {
-                LogError($"Project analysis failed: {e.Message}");
-                return CreateErrorResponse($"Project analysis failed: {e.Message}", e.StackTrace);
+                LogError($"Project operation failed: {e.Message}");
+                return CreateErrorResponse($"Project operation failed: {e.Message}", e.StackTrace);
             }
+        }
+
+        private object RunAnalyze(ProjectParameters args)
+        {
+            LogMessage("Starting project analysis...");
+
+            var projectInfo = new
+            {
+                project = GetProjectInfo(),
+                settings = args.includeSettings ? GetProjectSettings() : null,
+                scenes = args.includeScenes ? GetSceneInfo() : null,
+                packages = args.includePackages ? GetPackageInfo() : null,
+                assets = args.includeAssets ? GetAssetInfo() : null,
+                buildSettings = GetBuildSettings(),
+                performance = GetPerformanceMetrics()
+            };
+
+            LogMessage("Project analysis completed successfully");
+            return CreateSuccessResponse(projectInfo, "Project analysis completed");
+        }
+
+        private object SetSettings(ProjectParameters args)
+        {
+            var changes = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(args.companyName))
+            {
+                PlayerSettings.companyName = args.companyName;
+                changes.Add($"companyName={args.companyName}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(args.productName))
+            {
+                PlayerSettings.productName = args.productName;
+                changes.Add($"productName={args.productName}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(args.bundleVersion))
+            {
+                PlayerSettings.bundleVersion = args.bundleVersion;
+                changes.Add($"bundleVersion={args.bundleVersion}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(args.version))
+            {
+                PlayerSettings.bundleVersion = args.version;
+                changes.Add($"version={args.version}");
+            }
+
+            if (changes.Count == 0)
+                return CreateErrorResponse("No settings provided to update.");
+
+            AssetDatabase.SaveAssets();
+            return CreateSuccessResponse(new { updated = changes }, "Project settings updated");
+        }
+
+        private object ListScenes(ProjectParameters args)
+        {
+            var scenes = new List<object>();
+
+            foreach (var guid in AssetDatabase.FindAssets("t:Scene", new[] { "Assets" }))
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var inBuild = false;
+                var buildIndex = -1;
+                var enabled = false;
+
+                for (int i = 0; i < EditorBuildSettings.scenes.Length; i++)
+                {
+                    if (EditorBuildSettings.scenes[i].path == path)
+                    {
+                        inBuild = true;
+                        buildIndex = i;
+                        enabled = EditorBuildSettings.scenes[i].enabled;
+                        break;
+                    }
+                }
+
+                if (!inBuild && !args.includeDisabled) continue;
+
+                scenes.Add(new
+                {
+                    name = System.IO.Path.GetFileNameWithoutExtension(path),
+                    path,
+                    inBuildSettings = inBuild,
+                    buildIndex,
+                    enabled,
+                    isLoaded = IsSceneLoaded(path),
+                    isDirty = IsSceneDirty(path)
+                });
+            }
+
+            return CreateSuccessResponse(new
+            {
+                totalScenes = scenes.Count,
+                activeScene = EditorSceneManager.GetActiveScene().name,
+                scenes
+            }, "Scenes listed");
+        }
+
+        private object GetBuildSettingsResponse()
+        {
+            var sceneList = new List<object>();
+            for (int i = 0; i < EditorBuildSettings.scenes.Length; i++)
+            {
+                var s = EditorBuildSettings.scenes[i];
+                sceneList.Add(new { path = s.path, enabled = s.enabled, buildIndex = i });
+            }
+
+            return CreateSuccessResponse(new
+            {
+                buildSettings = GetBuildSettings(),
+                playerSettings = new
+                {
+                    PlayerSettings.companyName,
+                    PlayerSettings.productName,
+                    PlayerSettings.bundleVersion,
+                    applicationIdentifier = PlayerSettings.applicationIdentifier
+                },
+                scenesInBuild = sceneList
+            }, "Build settings retrieved");
+        }
+
+        private object SetBuildTarget(ProjectParameters args)
+        {
+            if (string.IsNullOrWhiteSpace(args.target))
+                return CreateErrorResponse("target is required (e.g. StandaloneWindows64, Android, iOS).");
+
+            if (!Enum.TryParse<BuildTarget>(args.target, out var buildTarget))
+                return CreateErrorResponse($"Invalid build target: {args.target}");
+
+            var group = BuildPipeline.GetBuildTargetGroup(buildTarget);
+            if (!BuildPipeline.IsBuildTargetSupported(group, buildTarget))
+                return CreateErrorResponse($"Build target {buildTarget} is not supported on this machine.");
+
+            EditorUserBuildSettings.SwitchActiveBuildTarget(group, buildTarget);
+
+            return CreateSuccessResponse(new
+            {
+                activeBuildTarget = buildTarget.ToString(),
+                buildTargetGroup = group.ToString()
+            }, $"Build target set to {buildTarget}");
+        }
+
+        private object RefreshAssets(ProjectParameters args)
+        {
+            if (args.forceReimport)
+                AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+            else
+                AssetDatabase.Refresh();
+
+            return CreateSuccessResponse(new
+            {
+                refreshed = true,
+                forceReimport = args.forceReimport
+            }, "Asset database refreshed");
         }
 
         private object GetProjectInfo()
@@ -126,8 +289,10 @@ namespace UnityMCP.Editor
                 var defaultMaterialProperty = physicsType.GetProperty("defaultMaterial");
                 if (defaultMaterialProperty != null)
                 {
-                    var material = defaultMaterialProperty.GetValue(null) as PhysicMaterial;
-                    return material?.name ?? "None";
+                    // Cast to the base UnityEngine.Object: the concrete type was renamed
+                    // PhysicMaterial -> PhysicsMaterial in Unity 6, and we only read .name.
+                    var material = defaultMaterialProperty.GetValue(null) as UnityEngine.Object;
+                    return material != null ? material.name : "None";
                 }
                 return "Not Available";
             }
@@ -162,7 +327,7 @@ namespace UnityMCP.Editor
             {
                 totalScenes = scenes.Count,
                 activeScene = EditorSceneManager.GetActiveScene().name,
-                loadedScenes = EditorSceneManager.loadedSceneCount,
+                loadedScenes = UnityEngine.SceneManagement.SceneManager.loadedSceneCount,
                 scenes = scenes
             };
         }
@@ -256,7 +421,11 @@ namespace UnityMCP.Editor
                 connectProfiler = EditorUserBuildSettings.connectProfiler,
                 buildScriptsOnly = EditorUserBuildSettings.buildScriptsOnly,
                 allowDebugging = EditorUserBuildSettings.allowDebugging,
+#if UNITY_6000_0_OR_NEWER
+                symlinkLibraries = EditorUserBuildSettings.symlinkSources,
+#else
                 symlinkLibraries = EditorUserBuildSettings.symlinkLibraries,
+#endif
                 exportAsGoogleAndroidProject = EditorUserBuildSettings.exportAsGoogleAndroidProject
             };
         }
@@ -291,9 +460,9 @@ namespace UnityMCP.Editor
 
         private bool IsSceneLoaded(string scenePath)
         {
-            for (int i = 0; i < EditorSceneManager.loadedSceneCount; i++)
+            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.loadedSceneCount; i++)
             {
-                var loadedScene = EditorSceneManager.GetSceneAt(i);
+                var loadedScene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
                 if (loadedScene.path == scenePath)
                     return true;
             }
@@ -302,9 +471,9 @@ namespace UnityMCP.Editor
 
         private bool IsSceneDirty(string scenePath)
         {
-            for (int i = 0; i < EditorSceneManager.loadedSceneCount; i++)
+            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.loadedSceneCount; i++)
             {
-                var loadedScene = EditorSceneManager.GetSceneAt(i);
+                var loadedScene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
                 if (loadedScene.path == scenePath)
                     return loadedScene.isDirty;
             }

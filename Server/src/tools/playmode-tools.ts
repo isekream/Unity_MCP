@@ -27,7 +27,8 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
         properties: {
           maximizeGameView: {
             type: 'boolean',
-            description: 'Whether to maximize the Game view when entering Play Mode',
+            description:
+              'Whether to maximize the Game view when entering Play Mode',
             default: false,
           },
         },
@@ -92,7 +93,8 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
         properties: {
           frames: {
             type: 'number',
-            description: 'Number of frames to step (default 1). The game pauses after stepping.',
+            description:
+              'Number of frames to step (default 1). The game pauses after stepping.',
             default: 1,
           },
         },
@@ -107,7 +109,7 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
     {
       name: 'playmode.inspectGameObject',
       description:
-        'Inspect a GameObject\'s runtime state during Play Mode. Returns live component values (transforms, physics velocities, custom script fields) — not just the serialized editor values. Essential for debugging runtime behavior.',
+        "Inspect a GameObject's runtime state during Play Mode. Returns live component values (transforms, physics velocities, custom script fields) — not just the serialized editor values. Essential for debugging runtime behavior.",
       inputSchema: {
         type: 'object',
         properties: {
@@ -127,14 +129,18 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
           },
           includeChildren: {
             type: 'boolean',
-            description: 'Whether to include child GameObjects in the inspection',
+            description:
+              'Whether to include child GameObjects in the inspection',
             default: false,
           },
         },
         additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
-        const result = await unityClient.sendRequest('playmode.inspectGameObject', args);
+        const result = await unityClient.sendRequest(
+          'playmode.inspectGameObject',
+          args
+        );
         return result;
       },
     },
@@ -156,11 +162,13 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
           },
           componentType: {
             type: 'string',
-            description: 'Type of the component to modify (e.g., "Transform", "Rigidbody", "PlayerController")',
+            description:
+              'Type of the component to modify (e.g., "Transform", "Rigidbody", "PlayerController")',
           },
           propertyName: {
             type: 'string',
-            description: 'Name of the property or field to set (e.g., "position", "velocity", "speed")',
+            description:
+              'Name of the property or field to set (e.g., "position", "velocity", "speed")',
           },
           value: {
             description:
@@ -171,7 +179,10 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
         additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
-        const result = await unityClient.sendRequest('playmode.setProperty', args);
+        const result = await unityClient.sendRequest(
+          'playmode.setProperty',
+          args
+        );
         return result;
       },
     },
@@ -209,7 +220,10 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
         additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
-        const result = await unityClient.sendRequest('playmode.invokeMethod', args);
+        const result = await unityClient.sendRequest(
+          'playmode.invokeMethod',
+          args
+        );
         return result;
       },
     },
@@ -237,7 +251,8 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
           },
           sinceLastCall: {
             type: 'boolean',
-            description: 'Only return logs since the last call to this tool (useful for incremental monitoring)',
+            description:
+              'Only return logs since the last call to this tool (useful for incremental monitoring)',
             default: false,
           },
           search: {
@@ -248,7 +263,10 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
         additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
-        const result = await unityClient.sendRequest('playmode.getConsoleLogs', args);
+        const result = await unityClient.sendRequest(
+          'playmode.getConsoleLogs',
+          args
+        );
         return result;
       },
     },
@@ -267,7 +285,8 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
           },
           includePhysics: {
             type: 'boolean',
-            description: 'Include physics simulation info (contacts, rigidbody count)',
+            description:
+              'Include physics simulation info (contacts, rigidbody count)',
             default: true,
           },
           includeTime: {
@@ -279,7 +298,10 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
         additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
-        const result = await unityClient.sendRequest('playmode.getRuntimeInfo', args);
+        const result = await unityClient.sendRequest(
+          'playmode.getRuntimeInfo',
+          args
+        );
         return result;
       },
     },
@@ -304,7 +326,8 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
                 },
                 instanceId: {
                   type: 'number',
-                  description: 'Instance ID of the GameObject (alternative to name)',
+                  description:
+                    'Instance ID of the GameObject (alternative to name)',
                 },
                 componentType: {
                   type: 'string',
@@ -345,7 +368,8 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
               },
               holdDuration: {
                 type: 'number',
-                description: 'How long to hold the key in seconds (default: same as observation duration)',
+                description:
+                  'How long to hold the key in seconds (default: same as observation duration)',
               },
             },
             required: ['key'],
@@ -357,7 +381,11 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
       async execute(args: Record<string, unknown>) {
         const duration = (args.duration as number) ?? 2.0;
         const timeoutMs = (duration + 5) * 1000;
-        const result = await unityClient.sendRequest('playmode.observe', args, timeoutMs);
+        const result = await unityClient.sendRequest(
+          'playmode.observe',
+          args,
+          timeoutMs
+        );
         return result;
       },
     },
@@ -394,7 +422,11 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
       async execute(args: Record<string, unknown>) {
         const holdDuration = (args.holdDuration as number) ?? 0.1;
         const timeoutMs = (holdDuration + 5) * 1000;
-        const result = await unityClient.sendRequest('playmode.simulateInput', args, timeoutMs);
+        const result = await unityClient.sendRequest(
+          'playmode.simulateInput',
+          args,
+          timeoutMs
+        );
         return result;
       },
     },
@@ -408,14 +440,18 @@ export function createPlayModeTools(unityClient: UnityClient): Tool[] {
         properties: {
           timeScale: {
             type: 'number',
-            description: 'Time scale value (0 = frozen, 1 = normal, 2 = double speed)',
+            description:
+              'Time scale value (0 = frozen, 1 = normal, 2 = double speed)',
           },
         },
         required: ['timeScale'],
         additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
-        const result = await unityClient.sendRequest('playmode.setTimeScale', args);
+        const result = await unityClient.sendRequest(
+          'playmode.setTimeScale',
+          args
+        );
         return result;
       },
     },

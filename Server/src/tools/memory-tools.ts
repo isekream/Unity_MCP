@@ -18,7 +18,9 @@ export function createMemoryTools(unityClient: UnityClient): Tool[] {
         additionalProperties: false,
       },
       async execute() {
-        const result = await unityClient.sendRequest('project_memory', { action: 'status' });
+        const result = await unityClient.sendRequest('project_memory', {
+          action: 'status',
+        });
         return result;
       },
     },
@@ -32,12 +34,14 @@ export function createMemoryTools(unityClient: UnityClient): Tool[] {
         properties: {
           includeScripts: {
             type: 'boolean',
-            description: 'Whether to scan C# scripts for design intent and summaries',
+            description:
+              'Whether to scan C# scripts for design intent and summaries',
             default: true,
           },
           includeDesignDocs: {
             type: 'boolean',
-            description: 'Whether to index design documents and specs found in the project',
+            description:
+              'Whether to index design documents and specs found in the project',
             default: true,
           },
         },
@@ -61,7 +65,8 @@ export function createMemoryTools(unityClient: UnityClient): Tool[] {
         properties: {
           query: {
             type: 'string',
-            description: 'Natural language question about the project (e.g. "What are the current jump parameters and why?", "How does damage calculation work?")',
+            description:
+              'Natural language question about the project (e.g. "What are the current jump parameters and why?", "How does damage calculation work?")',
           },
           maxResults: {
             type: 'number',
@@ -90,7 +95,8 @@ export function createMemoryTools(unityClient: UnityClient): Tool[] {
         properties: {
           insightType: {
             type: 'string',
-            description: 'Category of insight: "observation", "design_decision", "gotcha", "performance_note", "vision"',
+            description:
+              'Category of insight: "observation", "design_decision", "gotcha", "performance_note", "vision"',
             default: 'observation',
           },
           title: {
@@ -99,11 +105,13 @@ export function createMemoryTools(unityClient: UnityClient): Tool[] {
           },
           content: {
             type: 'string',
-            description: 'The actual finding, decision, or measured result. Be specific and quantitative when possible.',
+            description:
+              'The actual finding, decision, or measured result. Be specific and quantitative when possible.',
           },
           relatedTo: {
             type: 'string',
-            description: 'What part of the game this relates to (e.g. "PlayerController", "Jump Mechanics", "Enemy AI")',
+            description:
+              'What part of the game this relates to (e.g. "PlayerController", "Jump Mechanics", "Enemy AI")',
           },
         },
         required: ['content'],
@@ -128,7 +136,9 @@ export function createMemoryTools(unityClient: UnityClient): Tool[] {
         additionalProperties: false,
       },
       async execute() {
-        const result = await unityClient.sendRequest('project_memory', { action: 'get_design_doc' });
+        const result = await unityClient.sendRequest('project_memory', {
+          action: 'get_design_doc',
+        });
         return result;
       },
     },
@@ -142,7 +152,8 @@ export function createMemoryTools(unityClient: UnityClient): Tool[] {
         properties: {
           content: {
             type: 'string',
-            description: 'The complete new content of the living design document (markdown).',
+            description:
+              'The complete new content of the living design document (markdown).',
           },
         },
         required: ['content'],
@@ -166,11 +177,13 @@ export function createMemoryTools(unityClient: UnityClient): Tool[] {
         properties: {
           goal: {
             type: 'string',
-            description: 'The concrete improvement or design goal you want advice on (be specific).',
+            description:
+              'The concrete improvement or design goal you want advice on (be specific).',
           },
           focusArea: {
             type: 'string',
-            description: 'Optional focus area (e.g. "movement", "combat", "camera", "progression")',
+            description:
+              'Optional focus area (e.g. "movement", "combat", "camera", "progression")',
           },
         },
         required: ['goal'],

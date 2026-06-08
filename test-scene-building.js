@@ -50,12 +50,18 @@ async function run() {
   const ping = await sendRequest('test', {});
   console.log('✅ ping:', ping.result?.status ?? ping.result);
 
+  function payload(result) {
+    if (!result || result.error) throw new Error(result?.error?.message ?? 'request failed');
+    if (result.success === false) throw new Error(result.message ?? 'tool failed');
+    return result.data ?? result;
+  }
+
   const slope = await sendRequest('scene.createGameObject', {
     name: 'MCP_Slope',
     primitive: 'Plane',
     scale: { x: 10, y: 1, z: 20 },
   });
-  const slopeData = slope.result?.data ?? slope.result;
+  const slopeData = payload(slope.result);
   console.log('✅ createGameObject (primitive):', slopeData?.name, 'id=', slopeData?.instanceId);
 
   const skier = await sendRequest('scene.createPrimitive', {
@@ -63,7 +69,7 @@ async function run() {
     primitiveType: 'Capsule',
     position: { x: 0, y: 2, z: 0 },
   });
-  const skierData = skier.result?.data ?? skier.result;
+  const skierData = payload(skier.result);
   console.log('✅ createPrimitive:', skierData?.name, 'id=', skierData?.instanceId);
 
   const addRb = await sendRequest('scene.modifyComponent', {
@@ -71,7 +77,7 @@ async function run() {
     action: 'add',
     componentType: 'Rigidbody',
   });
-  console.log('✅ add Rigidbody:', addRb.result?.message ?? addRb.result);
+  console.log('✅ add Rigidbody:', payload(addRb.result).message ?? addRb.result?.message);
 
   const modRb = await sendRequest('scene.modifyComponent', {
     gameObjectName: 'MCP_Skier',
@@ -79,10 +85,11 @@ async function run() {
     componentType: 'Rigidbody',
     properties: { mass: 70, useGravity: true },
   });
-  console.log('✅ modify Rigidbody:', modRb.result?.message ?? modRb.result);
+  console.log('✅ modify Rigidbody:', payload(modRb.result).message ?? modRb.result?.message);
 
   const query = await sendRequest('scene.query', { filter: 'MCP_' });
-  const objects = query.result?.data?.objects ?? query.result?.objects ?? [];
+  const queryData = payload(query.result);
+  const objects = queryData?.objects ?? [];
   console.log('✅ query:', objects.length, 'root(s) matching MCP_');
 
   if (typeof skierData?.instanceId !== 'number') {

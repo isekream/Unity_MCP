@@ -36,6 +36,8 @@ namespace UnityMCP.Editor
         private static bool autoStart = false;
         private static Thread listenerThread;
         private static readonly ConcurrentQueue<Action> mainThreadActions = new ConcurrentQueue<Action>();
+        private static int mainThreadId;
+        private static bool mainThreadPumpScheduled;
         
         private Vector2 scrollPosition;
         private string logText = "";
@@ -45,6 +47,7 @@ namespace UnityMCP.Editor
 
         static McpUnityServer()
         {
+            mainThreadId = Thread.CurrentThread.ManagedThreadId;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 
             // Single persistent main-thread pump. Tool execution is dispatched here
@@ -264,6 +267,8 @@ namespace UnityMCP.Editor
                 SessionState.SetBool(SESSION_WAS_RUNNING, true);
                 LogMessage($"MCP Server started on port {serverPort}");
 
+                EnsureMainThreadPump();
+
                 // Start listening thread
                 listenerThread = new Thread(HandleRequests);
                 listenerThread.Start();
@@ -306,6 +311,7 @@ namespace UnityMCP.Editor
         private static void ShutdownListener()
         {
             isServerRunning = false;
+            mainThreadPumpScheduled = false;
             try { httpListener?.Stop(); }
             catch (Exception e) { LogError($"Error stopping HTTP listener: {e.Message}"); }
             listenerThread?.Join(1000);
@@ -410,9 +416,37 @@ namespace UnityMCP.Editor
         /// </summary>
         public static void RunOnMainThread(Action action)
         {
-            if (action != null)
+            if (action == null) return;
+
+            if (Thread.CurrentThread.ManagedThreadId == mainThreadId)
             {
-                mainThreadActions.Enqueue(action);
+                try { action(); }
+                catch (Exception e) { LogError($"Main-thread action failed: {e.Message}"); }
+                return;
+            }
+
+            mainThreadActions.Enqueue(action);
+            EnsureMainThreadPump();
+            EditorApplication.QueuePlayerLoopUpdate();
+        }
+
+        private static void EnsureMainThreadPump()
+        {
+            if (mainThreadPumpScheduled) return;
+            mainThreadPumpScheduled = true;
+            EditorApplication.delayCall += MainThreadPumpTick;
+        }
+
+        private static void MainThreadPumpTick()
+        {
+            PumpMainThreadActions();
+            if (isServerRunning)
+            {
+                EditorApplication.delayCall += MainThreadPumpTick;
+            }
+            else
+            {
+                mainThreadPumpScheduled = false;
             }
         }
 
@@ -515,6 +549,7 @@ namespace UnityMCP.Editor
                         break;
                     }
 
+                    EditorApplication.QueuePlayerLoopUpdate();
                     Thread.Sleep(10);
                 }
 

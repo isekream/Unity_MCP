@@ -2,10 +2,10 @@ const http = require('http');
 
 // Test the project.analyze tool after the threading fix
 const testData = JSON.stringify({
-  Id: 'final-test',
-  Type: 'request', 
-  Method: 'project.analyze',
-  Params: {
+  id: 'final-test',
+  type: 'request',
+  method: 'project.analyze',
+  params: {
     includeAssets: false,
     includePackages: true,
     includeScenes: true,
@@ -33,19 +33,20 @@ const req = http.request(options, (res) => {
     console.log('\n📋 Unity Response:');
     try {
       const parsed = JSON.parse(response);
-      if (parsed.Error) {
-        console.log('❌ Error:', parsed.Error.Message);
-      } else if (parsed.Result) {
+      if (parsed.error) {
+        console.log('❌ Error:', parsed.error.message);
+      } else if (parsed.result) {
         console.log('✅ SUCCESS! Unity tools working properly');
         console.log('📊 Project Info:');
-        if (parsed.Result.project) {
-          console.log(`   - Project: ${parsed.Result.project.projectName}`);
-          console.log(`   - Unity Version: ${parsed.Result.project.unityVersion}`);
-          console.log(`   - Platform: ${parsed.Result.project.platform}`);
+        const data = parsed.result.data ?? parsed.result;
+        if (data.project) {
+          console.log(`   - Project: ${data.project.projectName}`);
+          console.log(`   - Unity Version: ${data.project.unityVersion}`);
+          console.log(`   - Platform: ${data.project.platform}`);
         }
-        if (parsed.Result.scenes) {
-          console.log(`   - Total Scenes: ${parsed.Result.scenes.totalScenes}`);
-          console.log(`   - Active Scene: ${parsed.Result.scenes.activeScene}`);
+        if (data.scenes) {
+          console.log(`   - Total Scenes: ${data.scenes.totalScenes}`);
+          console.log(`   - Active Scene: ${data.scenes.activeScene}`);
         }
         console.log('\n🎉 MCP Integration is working correctly!');
       } else {

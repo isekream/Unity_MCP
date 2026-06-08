@@ -34,7 +34,8 @@ namespace UnityMCP.Editor
         private Vector2 scrollPosition;
         private string logText = "";
         private readonly List<string> logs = new List<string>();
-        private readonly Dictionary<string, McpToolBase> tools = new Dictionary<string, McpToolBase>();
+        private static readonly Dictionary<string, McpToolBase> tools = new Dictionary<string, McpToolBase>();
+        private static bool toolsInitialized = false;
         
         static McpUnityServer()
         {
@@ -59,7 +60,7 @@ namespace UnityMCP.Editor
         {
             instance = this;
             LoadPreferences();
-            InitializeTools();
+            EnsureToolsInitialized();
             RefreshUI();
         }
 
@@ -215,6 +216,8 @@ namespace UnityMCP.Editor
 
             try
             {
+                EnsureToolsInitialized();
+
                 httpListener = new HttpListener();
                 httpListener.Prefixes.Add($"http://localhost:{serverPort}/");
                 httpListener.Start();
@@ -318,11 +321,15 @@ namespace UnityMCP.Editor
             }
         }
 
-        private void InitializeTools()
+        private static void EnsureToolsInitialized()
         {
+            if (toolsInitialized)
+            {
+                return;
+            }
+
             tools.Clear();
-            
-            // Register all available tools
+
             RegisterTool(new ProjectAnalyzerTool());
             RegisterTool(new SceneManipulationTool());
             RegisterTool(new AssetManagerTool());
@@ -333,10 +340,11 @@ namespace UnityMCP.Editor
             RegisterTool(new ProjectMemoryTool());
             RegisterTool(new LabTool());
 
+            toolsInitialized = true;
             LogMessage($"Initialized {tools.Count} MCP tools");
         }
 
-        private void RegisterTool(McpToolBase tool)
+        private static void RegisterTool(McpToolBase tool)
         {
             if (tool != null && !string.IsNullOrEmpty(tool.ToolName))
             {
@@ -346,14 +354,16 @@ namespace UnityMCP.Editor
 
         public static McpResponse ExecuteTool(string toolName, object parameters)
         {
-            if (!instance.tools.ContainsKey(toolName))
+            EnsureToolsInitialized();
+
+            if (!tools.ContainsKey(toolName))
             {
                 return McpResponse.CreateError($"Tool '{toolName}' not found");
             }
 
             try
             {
-                var tool = instance.tools[toolName];
+                var tool = tools[toolName];
                 McpResponse result = null;
                 Exception resultException = null;
                 bool isComplete = false;
@@ -451,42 +461,125 @@ namespace UnityMCP.Editor
                 return McpResponse.CreateError("Invalid request format");
             }
 
-            // Parse method to extract tool name
-            var methodParts = request.Method.Split('.');
+            EnsureToolsInitialized();
+
+            var method = request.Method.Trim();
+
+            // Connection health check used by the Node MCP client on startup.
+            if (method.Equals("test", StringComparison.OrdinalIgnoreCase) ||
+                method.Equals("test.ping", StringComparison.OrdinalIgnoreCase))
+            {
+                return McpResponse.CreateSuccess(new
+                {
+                    status = "ok",
+                    tools = tools.Count,
+                    port = serverPort
+                });
+            }
+
+            // Direct tool invocation without a dot (e.g. "lab", "project_memory").
+            if (!method.Contains("."))
+            {
+                if (tools.ContainsKey(method))
+                {
+                    return ExecuteTool(method, request.Params);
+                }
+
+                return McpResponse.CreateError($"No tool found for method: {method}");
+            }
+
+            var methodParts = method.Split('.');
             if (methodParts.Length < 2)
             {
-                return McpResponse.CreateError($"Invalid method format: {request.Method}");
+                return McpResponse.CreateError($"Invalid method format: {method}");
             }
 
-            string toolCategory = methodParts[0];
+            string rawCategory = methodParts[0];
+            string toolCategory = NormalizeCategory(rawCategory);
             string toolAction = methodParts[1];
             string exactToolName = $"{toolCategory}_{toolAction}";
+            string exactToolNameAlt = $"{rawCategory}_{toolAction}";
 
-            if (instance == null)
+            if (tools.ContainsKey(exactToolNameAlt))
             {
-                return McpResponse.CreateError("MCP Server window is not open. Open it via Tools > Unity MCP > Server Window.");
+                return ExecuteTool(exactToolNameAlt, request.Params);
             }
 
-            // Try exact match first (e.g., "scene_capture")
-            if (instance.tools.ContainsKey(exactToolName))
+            if (tools.ContainsKey(exactToolName))
             {
                 return ExecuteTool(exactToolName, request.Params);
             }
 
             // Fall back to category-level tool and inject action into params.
-            // This routes "playmode.enter" → tool "playmode" with action="enter",
-            // and "scene.createGameObject" → tool "scene_manipulate" with action injected.
-            foreach (var kvp in instance.tools)
+            foreach (var kvp in tools)
             {
                 if (kvp.Value.Category == toolCategory)
                 {
-                    // Inject the action into the params so the tool can dispatch
-                    var paramsWithAction = InjectAction(request.Params, toolAction);
+                    var paramsWithAction = InjectAction(request.Params, NormalizeAction(toolAction));
                     return ExecuteTool(kvp.Key, paramsWithAction);
                 }
             }
 
             return McpResponse.CreateError($"No tool found for method: {request.Method}");
+        }
+
+        private static string NormalizeCategory(string category)
+        {
+            switch (category)
+            {
+                case "assets":
+                case "packages":
+                    return "asset";
+                default:
+                    return category;
+            }
+        }
+
+        private static string NormalizeAction(string action)
+        {
+            if (string.IsNullOrEmpty(action))
+            {
+                return action;
+            }
+
+            switch (action)
+            {
+                case "createGameObject": return "create_object";
+                case "deleteGameObject": return "delete_object";
+                case "moveGameObject": return "set_transform";
+                case "createScript": return "create_script";
+                case "analyze": return "analyze";
+                case "attachScript": return "attach_script";
+                case "managePrefabs": return "manage_prefabs";
+                case "createMaterial": return "create_material";
+                case "createTexture": return "create_texture";
+                case "getInfo": return "get_info";
+                case "runTests": return "run_tests";
+                case "getReport": return "get_report";
+                case "getConsoleLogs": return "get_console_logs";
+                default:
+                    return CamelCaseToSnakeCase(action);
+            }
+        }
+
+        private static string CamelCaseToSnakeCase(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+
+            var builder = new StringBuilder();
+            for (int i = 0; i < value.Length; i++)
+            {
+                char c = value[i];
+                if (char.IsUpper(c) && i > 0)
+                {
+                    builder.Append('_');
+                }
+                builder.Append(char.ToLowerInvariant(c));
+            }
+            return builder.ToString();
         }
 
         private static object InjectAction(object parameters, string action)

@@ -9,18 +9,12 @@ namespace UnityMCP.Editor
     /// </summary>
     internal static class UnityCompat
     {
-        private static readonly MethodInfo GetEntityIdMethod =
-            typeof(UnityEngine.Object).GetMethod("GetEntityId", BindingFlags.Public | BindingFlags.Instance);
-
         public static int GetObjectId(UnityEngine.Object obj)
         {
             if (obj == null) return 0;
 
-            if (GetEntityIdMethod != null)
-            {
-                return (int)GetEntityIdMethod.Invoke(obj, null);
-            }
-
+            // Editor MCP uses instance IDs for cross-request object references.
+            // Unity 6's GetEntityId() returns an EntityId struct (not castable to int).
 #pragma warning disable CS0618
             return obj.GetInstanceID();
 #pragma warning restore CS0618

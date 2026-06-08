@@ -20,7 +20,9 @@ export function createLabTools(unityClient: UnityClient): Tool[] {
         additionalProperties: false,
       },
       async execute() {
-        const result = await unityClient.sendRequest('lab', { action: 'status' });
+        const result = await unityClient.sendRequest('lab', {
+          action: 'status',
+        });
         return result;
       },
     },
@@ -28,30 +30,34 @@ export function createLabTools(unityClient: UnityClient): Tool[] {
     {
       name: 'lab.create_experiment',
       description:
-        'Define a new rigorous experiment. Specify the hypothesis, the parameters you want to vary, their ranges, how many trials to run, and what input behavior to test. The experiment is grounded against your project\'s living design document and past insights.',
+        "Define a new rigorous experiment. Specify the hypothesis, the parameters you want to vary, their ranges, how many trials to run, and what input behavior to test. The experiment is grounded against your project's living design document and past insights.",
       inputSchema: {
         type: 'object',
         properties: {
           experimentName: {
             type: 'string',
-            description: 'Human-readable name for the experiment (e.g. "Jump Responsiveness v3")',
+            description:
+              'Human-readable name for the experiment (e.g. "Jump Responsiveness v3")',
           },
           hypothesis: {
             type: 'string',
-            description: 'What you are trying to prove or improve (e.g. "Increasing coyote time to 0.2s will improve perceived fairness without hurting precision")',
+            description:
+              'What you are trying to prove or improve (e.g. "Increasing coyote time to 0.2s will improve perceived fairness without hurting precision")',
           },
           parameters: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Paths to the parameters being varied (e.g. ["PlayerController.coyoteTime", "PlayerController.jumpForce"])',
+            description:
+              'Paths to the parameters being varied (e.g. ["PlayerController.coyoteTime", "PlayerController.jumpForce"])',
           },
           valueRanges: {
             type: 'array',
             items: {
               type: 'array',
-              items: { type: 'number' }
+              items: { type: 'number' },
             },
-            description: 'Parallel array of [min, max] ranges for each parameter',
+            description:
+              'Parallel array of [min, max] ranges for each parameter',
           },
           trialCount: {
             type: 'number',

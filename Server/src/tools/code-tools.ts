@@ -5,27 +5,36 @@ export function createCodeTools(unityClient: UnityClient): Tool[] {
   return [
     {
       name: 'code.createScript',
-      description: 'Generate C# scripts with templates for common Unity patterns like MonoBehaviour, ScriptableObject, or custom classes.',
+      description:
+        'Generate C# scripts with templates for common Unity patterns like MonoBehaviour, ScriptableObject, or custom classes.',
       inputSchema: {
         type: 'object',
         properties: {
           name: {
             type: 'string',
-            description: 'Name of the script class'
+            description: 'Name of the script class',
           },
           template: {
             type: 'string',
-            enum: ['MonoBehaviour', 'ScriptableObject', 'Interface', 'Enum', 'Class', 'Singleton', 'StateMachine'],
+            enum: [
+              'MonoBehaviour',
+              'ScriptableObject',
+              'Interface',
+              'Enum',
+              'Class',
+              'Singleton',
+              'StateMachine',
+            ],
             description: 'Template type to use',
-            default: 'MonoBehaviour'
+            default: 'MonoBehaviour',
           },
           namespace: {
             type: 'string',
-            description: 'Namespace for the script'
+            description: 'Namespace for the script',
           },
           savePath: {
             type: 'string',
-            description: 'Path to save the script (relative to Assets folder)'
+            description: 'Path to save the script (relative to Assets folder)',
           },
           methods: {
             type: 'array',
@@ -40,18 +49,18 @@ export function createCodeTools(unityClient: UnityClient): Tool[] {
                     type: 'object',
                     properties: {
                       name: { type: 'string' },
-                      type: { type: 'string' }
+                      type: { type: 'string' },
                     },
-                    required: ['name', 'type']
-                  }
+                    required: ['name', 'type'],
+                  },
                 },
                 isPublic: { type: 'boolean', default: true },
                 isVirtual: { type: 'boolean', default: false },
-                body: { type: 'string', description: 'Method body code' }
+                body: { type: 'string', description: 'Method body code' },
               },
-              required: ['name']
+              required: ['name'],
             },
-            description: 'Methods to include in the script'
+            description: 'Methods to include in the script',
           },
           properties: {
             type: 'array',
@@ -64,73 +73,84 @@ export function createCodeTools(unityClient: UnityClient): Tool[] {
                 isSerializeField: { type: 'boolean', default: false },
                 hasGetter: { type: 'boolean', default: true },
                 hasSetter: { type: 'boolean', default: true },
-                defaultValue: { type: 'string' }
+                defaultValue: { type: 'string' },
               },
-              required: ['name', 'type']
+              required: ['name', 'type'],
             },
-            description: 'Properties and fields to include'
+            description: 'Properties and fields to include',
           },
           usings: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Additional using statements'
+            description: 'Additional using statements',
           },
           baseClass: {
             type: 'string',
-            description: 'Base class to inherit from (if not using template default)'
+            description:
+              'Base class to inherit from (if not using template default)',
           },
           interfaces: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Interfaces to implement'
-          }
+            description: 'Interfaces to implement',
+          },
         },
         required: ['name'],
-        additionalProperties: false
+        additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
         const result = await unityClient.sendRequest('code.createScript', args);
         return result;
-      }
+      },
     },
 
     {
       name: 'code.analyzeScripts',
-      description: 'Analyze existing C# scripts in the project to understand code structure, dependencies, and patterns.',
+      description:
+        'Analyze existing C# scripts in the project to understand code structure, dependencies, and patterns.',
       inputSchema: {
         type: 'object',
         properties: {
           scriptPath: {
             type: 'string',
-            description: 'Path to specific script to analyze'
+            description: 'Path to specific script to analyze',
           },
           directory: {
             type: 'string',
-            description: 'Directory to analyze all scripts in'
+            description: 'Directory to analyze all scripts in',
           },
           analysisType: {
             type: 'string',
-            enum: ['dependencies', 'complexity', 'patterns', 'documentation', 'all'],
+            enum: [
+              'dependencies',
+              'complexity',
+              'patterns',
+              'documentation',
+              'all',
+            ],
             description: 'Type of analysis to perform',
-            default: 'all'
+            default: 'all',
           },
           includeComments: {
             type: 'boolean',
             description: 'Whether to include comment analysis',
-            default: false
+            default: false,
           },
           findUnusedCode: {
             type: 'boolean',
             description: 'Whether to identify unused methods and variables',
-            default: false
-          }
+            default: false,
+          },
         },
-        additionalProperties: false
+        additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
-        const result = await unityClient.sendRequest('code.analyzeScripts', args);
+        const result = await unityClient.sendRequest(
+          'code.analyzeScripts',
+          args
+        );
         return result;
-      }
+      },
     },
 
     {
@@ -141,251 +161,275 @@ export function createCodeTools(unityClient: UnityClient): Tool[] {
         properties: {
           gameObjectName: {
             type: 'string',
-            description: 'Name of the target GameObject'
+            description: 'Name of the target GameObject',
           },
           gameObjectId: {
             type: 'number',
-            description: 'Instance ID of the target GameObject'
+            description: 'Instance ID of the target GameObject',
           },
           scriptPath: {
             type: 'string',
-            description: 'Path to the script file'
+            description: 'Path to the script file',
           },
           scriptName: {
             type: 'string',
-            description: 'Name of the script class'
+            description: 'Name of the script class',
           },
           configureProperties: {
             type: 'object',
             description: 'Properties to set on the script component',
-            additionalProperties: true
-          }
+            additionalProperties: true,
+          },
         },
-        additionalProperties: false
+        additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
         const result = await unityClient.sendRequest('code.attachScript', args);
         return result;
-      }
+      },
     },
 
     {
       name: 'code.findReferences',
-      description: 'Find references to scripts, components, or specific code elements throughout the project.',
+      description:
+        'Find references to scripts, components, or specific code elements throughout the project.',
       inputSchema: {
         type: 'object',
         properties: {
           searchType: {
             type: 'string',
             enum: ['script', 'method', 'property', 'variable', 'type'],
-            description: 'Type of element to search for'
+            description: 'Type of element to search for',
           },
           searchTerm: {
             type: 'string',
-            description: 'Name of the element to find references for'
+            description: 'Name of the element to find references for',
           },
           scope: {
             type: 'string',
             enum: ['project', 'scene', 'directory'],
             description: 'Scope of the search',
-            default: 'project'
+            default: 'project',
           },
           directory: {
             type: 'string',
-            description: 'Directory to limit search to (if scope is directory)'
+            description: 'Directory to limit search to (if scope is directory)',
           },
           includeComments: {
             type: 'boolean',
             description: 'Whether to include references in comments',
-            default: false
+            default: false,
           },
           caseSensitive: {
             type: 'boolean',
             description: 'Whether the search should be case sensitive',
-            default: true
-          }
+            default: true,
+          },
         },
         required: ['searchType', 'searchTerm'],
-        additionalProperties: false
+        additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
-        const result = await unityClient.sendRequest('code.findReferences', args);
+        const result = await unityClient.sendRequest(
+          'code.findReferences',
+          args
+        );
         return result;
-      }
+      },
     },
 
     {
       name: 'code.refactor',
-      description: 'Perform code refactoring operations like renaming, extracting methods, or reorganizing code.',
+      description:
+        'Perform code refactoring operations like renaming, extracting methods, or reorganizing code.',
       inputSchema: {
         type: 'object',
         properties: {
           operation: {
             type: 'string',
-            enum: ['rename', 'extractMethod', 'inlineMethod', 'moveMethod', 'addInterface'],
-            description: 'Refactoring operation to perform'
+            enum: [
+              'rename',
+              'extractMethod',
+              'inlineMethod',
+              'moveMethod',
+              'addInterface',
+            ],
+            description: 'Refactoring operation to perform',
           },
           scriptPath: {
             type: 'string',
-            description: 'Path to the script to refactor'
+            description: 'Path to the script to refactor',
           },
           oldName: {
             type: 'string',
-            description: 'Current name (for rename operations)'
+            description: 'Current name (for rename operations)',
           },
           newName: {
             type: 'string',
-            description: 'New name (for rename operations)'
+            description: 'New name (for rename operations)',
           },
           methodName: {
             type: 'string',
-            description: 'Method name for method-related operations'
+            description: 'Method name for method-related operations',
           },
           startLine: {
             type: 'number',
-            description: 'Start line for code selection (for extract operations)'
+            description:
+              'Start line for code selection (for extract operations)',
           },
           endLine: {
             type: 'number',
-            description: 'End line for code selection (for extract operations)'
+            description: 'End line for code selection (for extract operations)',
           },
           targetClass: {
             type: 'string',
-            description: 'Target class for move operations'
+            description: 'Target class for move operations',
           },
           interfaceName: {
             type: 'string',
-            description: 'Interface name for interface operations'
-          }
+            description: 'Interface name for interface operations',
+          },
         },
         required: ['operation', 'scriptPath'],
-        additionalProperties: false
+        additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
         const result = await unityClient.sendRequest('code.refactor', args);
         return result;
-      }
+      },
     },
 
     {
       name: 'code.generateDocumentation',
-      description: 'Generate or update XML documentation comments for C# scripts.',
+      description:
+        'Generate or update XML documentation comments for C# scripts.',
       inputSchema: {
         type: 'object',
         properties: {
           scriptPath: {
             type: 'string',
-            description: 'Path to the script to document'
+            description: 'Path to the script to document',
           },
           directory: {
             type: 'string',
-            description: 'Directory to document all scripts in'
+            description: 'Directory to document all scripts in',
           },
           includePrivate: {
             type: 'boolean',
             description: 'Whether to document private members',
-            default: false
+            default: false,
           },
           updateExisting: {
             type: 'boolean',
             description: 'Whether to update existing documentation',
-            default: true
+            default: true,
           },
           format: {
             type: 'string',
             enum: ['xml', 'markdown', 'html'],
             description: 'Documentation format',
-            default: 'xml'
-          }
+            default: 'xml',
+          },
         },
-        additionalProperties: false
+        additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
-        const result = await unityClient.sendRequest('code.generateDocumentation', args);
+        const result = await unityClient.sendRequest(
+          'code.generateDocumentation',
+          args
+        );
         return result;
-      }
+      },
     },
 
     {
       name: 'code.validate',
-      description: 'Validate C# scripts for common issues, style violations, and potential bugs.',
+      description:
+        'Validate C# scripts for common issues, style violations, and potential bugs.',
       inputSchema: {
         type: 'object',
         properties: {
           scriptPath: {
             type: 'string',
-            description: 'Path to specific script to validate'
+            description: 'Path to specific script to validate',
           },
           directory: {
             type: 'string',
-            description: 'Directory to validate all scripts in'
+            description: 'Directory to validate all scripts in',
           },
           checks: {
             type: 'array',
             items: {
               type: 'string',
-              enum: ['syntax', 'style', 'performance', 'security', 'unity-specific']
+              enum: [
+                'syntax',
+                'style',
+                'performance',
+                'security',
+                'unity-specific',
+              ],
             },
             description: 'Types of validation checks to perform',
-            default: ['syntax', 'style', 'unity-specific']
+            default: ['syntax', 'style', 'unity-specific'],
           },
           severity: {
             type: 'string',
             enum: ['all', 'error', 'warning', 'info'],
             description: 'Minimum severity level to report',
-            default: 'warning'
-          }
+            default: 'warning',
+          },
         },
-        additionalProperties: false
+        additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
         const result = await unityClient.sendRequest('code.validate', args);
         return result;
-      }
+      },
     },
 
     {
       name: 'code.format',
-      description: 'Format C# scripts according to coding standards and style guidelines.',
+      description:
+        'Format C# scripts according to coding standards and style guidelines.',
       inputSchema: {
         type: 'object',
         properties: {
           scriptPath: {
             type: 'string',
-            description: 'Path to specific script to format'
+            description: 'Path to specific script to format',
           },
           directory: {
             type: 'string',
-            description: 'Directory to format all scripts in'
+            description: 'Directory to format all scripts in',
           },
           style: {
             type: 'string',
             enum: ['microsoft', 'unity', 'custom'],
             description: 'Coding style to apply',
-            default: 'unity'
+            default: 'unity',
           },
           indentSize: {
             type: 'number',
             description: 'Number of spaces for indentation',
-            default: 4
+            default: 4,
           },
           useTabs: {
             type: 'boolean',
             description: 'Whether to use tabs instead of spaces',
-            default: false
+            default: false,
           },
           preserveComments: {
             type: 'boolean',
             description: 'Whether to preserve comment formatting',
-            default: true
-          }
+            default: true,
+          },
         },
-        additionalProperties: false
+        additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
         const result = await unityClient.sendRequest('code.format', args);
         return result;
-      }
-    }
+      },
+    },
   ];
-} 
+}

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { fileURLToPath } from 'node:url';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -164,8 +165,9 @@ class UnityMCPServer {
       try {
         await this.unityClient.connect();
         logger.info('Connected to Unity Editor successfully');
-      } catch (err: any) {
-        logger.warn('Could not connect to Unity Editor (running in standalone/test mode without Unity):', err?.message || err);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        logger.warn('Could not connect to Unity Editor (running in standalone/test mode without Unity):', message);
         // Continue to start the MCP transport anyway so tools can be listed/tested via inspector or clients.
         // Actual tool calls will fail until Unity is available.
       }
@@ -224,7 +226,11 @@ process.on('uncaughtException', (error: Error) => {
   process.exit(1);
 });
 
-// Start the server
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Start the server when executed directly (not when imported as a module).
+const isMainModule =
+  process.argv[1] !== undefined &&
+  fileURLToPath(import.meta.url) === fileURLToPath(process.argv[1]);
+
+if (isMainModule) {
   void main();
 } 

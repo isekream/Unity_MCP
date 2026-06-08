@@ -5,122 +5,132 @@ export function createProjectTools(unityClient: UnityClient): Tool[] {
   return [
     {
       name: 'project.analyze',
-      description: 'Analyze Unity project structure and return comprehensive information about the project, including scenes, assets, packages, and settings.',
+      description:
+        'Analyze Unity project structure and return comprehensive information about the project, including scenes, assets, packages, and settings.',
       inputSchema: {
         type: 'object',
         properties: {
           includeAssets: {
             type: 'boolean',
             description: 'Whether to include detailed asset information',
-            default: false
+            default: false,
           },
           includePackages: {
-            type: 'boolean', 
+            type: 'boolean',
             description: 'Whether to include package information',
-            default: true
-          }
+            default: true,
+          },
         },
-        additionalProperties: false
+        additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
         const { includeAssets = false, includePackages = true } = args;
-        
+
         const result = await unityClient.sendRequest('project.analyze', {
           includeAssets,
-          includePackages
+          includePackages,
         });
-        
+
         return result;
-      }
+      },
     },
 
     {
       name: 'project.getInfo',
-      description: 'Get basic information about the Unity project including name, version, platform, and loaded scenes.',
+      description:
+        'Get basic information about the Unity project including name, version, platform, and loaded scenes.',
       inputSchema: {
         type: 'object',
         properties: {},
-        additionalProperties: false
+        additionalProperties: false,
       },
       async execute() {
         const result = await unityClient.sendRequest('project.getInfo');
         return result;
-      }
+      },
     },
 
     {
       name: 'project.setSettings',
-      description: 'Modify Unity project settings such as company name, product name, version, or other player settings.',
+      description:
+        'Modify Unity project settings such as company name, product name, version, or other player settings.',
       inputSchema: {
         type: 'object',
         properties: {
           companyName: {
             type: 'string',
-            description: 'Company name in player settings'
+            description: 'Company name in player settings',
           },
           productName: {
             type: 'string',
-            description: 'Product name in player settings'
+            description: 'Product name in player settings',
           },
           version: {
             type: 'string',
-            description: 'Application version'
+            description: 'Application version',
           },
           bundleVersion: {
             type: 'string',
-            description: 'Bundle version for mobile platforms'
+            description: 'Bundle version for mobile platforms',
           },
           settings: {
             type: 'object',
             description: 'Additional player settings as key-value pairs',
-            additionalProperties: true
-          }
+            additionalProperties: true,
+          },
         },
-        additionalProperties: false
+        additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
-        const result = await unityClient.sendRequest('project.setSettings', args);
+        const result = await unityClient.sendRequest(
+          'project.setSettings',
+          args
+        );
         return result;
-      }
+      },
     },
 
     {
       name: 'project.listScenes',
-      description: 'List all scenes in the project, including their build settings and current load status.',
+      description:
+        'List all scenes in the project, including their build settings and current load status.',
       inputSchema: {
         type: 'object',
         properties: {
           includeDisabled: {
             type: 'boolean',
             description: 'Whether to include scenes not in build settings',
-            default: false
-          }
+            default: false,
+          },
         },
-        additionalProperties: false
+        additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
         const { includeDisabled = false } = args;
-        
+
         const result = await unityClient.sendRequest('project.listScenes', {
-          includeDisabled
+          includeDisabled,
         });
-        
+
         return result;
-      }
+      },
     },
 
     {
       name: 'project.getBuildSettings',
-      description: 'Get current build settings including target platform, scenes in build, and player settings.',
+      description:
+        'Get current build settings including target platform, scenes in build, and player settings.',
       inputSchema: {
         type: 'object',
         properties: {},
-        additionalProperties: false
+        additionalProperties: false,
       },
       async execute() {
-        const result = await unityClient.sendRequest('project.getBuildSettings');
+        const result = await unityClient.sendRequest(
+          'project.getBuildSettings'
+        );
         return result;
-      }
+      },
     },
 
     {
@@ -131,47 +141,56 @@ export function createProjectTools(unityClient: UnityClient): Tool[] {
         properties: {
           target: {
             type: 'string',
-            enum: ['StandaloneWindows64', 'StandaloneOSX', 'StandaloneLinux64', 'iOS', 'Android', 'WebGL', 'WSAPlayer'],
-            description: 'Target platform for builds'
-          }
+            enum: [
+              'StandaloneWindows64',
+              'StandaloneOSX',
+              'StandaloneLinux64',
+              'iOS',
+              'Android',
+              'WebGL',
+              'WSAPlayer',
+            ],
+            description: 'Target platform for builds',
+          },
         },
         required: ['target'],
-        additionalProperties: false
+        additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
         const { target } = args;
-        
+
         const result = await unityClient.sendRequest('project.setBuildTarget', {
-          target
+          target,
         });
-        
+
         return result;
-      }
+      },
     },
 
     {
       name: 'project.refreshAssets',
-      description: 'Refresh the Unity Asset Database to detect changes in project files.',
+      description:
+        'Refresh the Unity Asset Database to detect changes in project files.',
       inputSchema: {
         type: 'object',
         properties: {
           forceReimport: {
             type: 'boolean',
             description: 'Whether to force reimport all assets',
-            default: false
-          }
+            default: false,
+          },
         },
-        additionalProperties: false
+        additionalProperties: false,
       },
       async execute(args: Record<string, unknown>) {
         const { forceReimport = false } = args;
-        
+
         const result = await unityClient.sendRequest('project.refreshAssets', {
-          forceReimport
+          forceReimport,
         });
-        
+
         return result;
-      }
-    }
+      },
+    },
   ];
-} 
+}

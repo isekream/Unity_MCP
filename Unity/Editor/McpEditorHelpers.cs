@@ -376,11 +376,9 @@ namespace UnityMCP.Editor
                 var go = FindGameObject(path);
                 if (go != null)
                 {
-                    if (property != null && typeof(Component).IsAssignableFrom(property.type))
-                    {
-                        var compType = property.type;
+                    var compType = ResolvePropertyReferencedType(property);
+                    if (compType != null && typeof(Component).IsAssignableFrom(compType))
                         return go.GetComponent(compType) ?? go.GetComponents(compType).FirstOrDefault();
-                    }
                     return go;
                 }
             }
@@ -418,17 +416,31 @@ namespace UnityMCP.Editor
                         return type != null ? gameObject.GetComponent(type) : null;
                     }
 
-                    if (property != null && typeof(Component).IsAssignableFrom(property.type))
-                    {
-                        var compType = property.type;
+                    var compType = ResolvePropertyReferencedType(property);
+                    if (compType != null && typeof(Component).IsAssignableFrom(compType))
                         return gameObject.GetComponent(compType) ?? gameObject.GetComponents(compType).FirstOrDefault();
-                    }
 
                     return gameObject;
                 }
             }
 
             return null;
+        }
+
+        private static Type ResolvePropertyReferencedType(SerializedProperty property)
+        {
+            if (property == null || string.IsNullOrWhiteSpace(property.type))
+                return null;
+
+            if (string.Equals(property.type, "GameObject", StringComparison.OrdinalIgnoreCase))
+                return typeof(GameObject);
+
+            var componentType = FindComponentType(property.type);
+            if (componentType != null)
+                return componentType;
+
+            return Type.GetType($"UnityEngine.{property.type}, UnityEngine.CoreModule")
+                   ?? Type.GetType($"UnityEngine.{property.type}, UnityEngine");
         }
     }
 }

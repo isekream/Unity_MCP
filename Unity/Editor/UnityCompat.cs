@@ -74,5 +74,21 @@ namespace UnityMCP.Editor
 
             return rb2d.velocity;
         }
+
+        public static bool TryCopyAsset(string sourcePath, string destinationPath, out string error)
+        {
+            error = null;
+#if UNITY_6000_0_OR_NEWER
+            if (!UnityEditor.AssetDatabase.CopyAsset(sourcePath, destinationPath))
+            {
+                error = $"Failed to copy asset from {sourcePath} to {destinationPath}";
+                return false;
+            }
+            return true;
+#else
+            error = UnityEditor.AssetDatabase.CopyAsset(sourcePath, destinationPath);
+            return string.IsNullOrEmpty(error);
+#endif
+        }
     }
 }

@@ -78,7 +78,6 @@ namespace UnityMCP.Editor
                     "get_info" => GetAssetInfo(args),
                     "manage_packages" or "manage" or "list" => ManagePackages(args, parameters),
                     "install" or "update" or "remove" => ManagePackages(args, parameters),
-                    "organize" => OrganizeAsset(args, parameters),
                     _ => CreateErrorResponse(
                         $"Unknown asset action '{action}'. Supported: import, create_material, manage_prefabs, organize, search, create_texture, get_info, manage_packages, list_assets, move_asset, delete_asset")
                 };
@@ -238,9 +237,8 @@ namespace UnityMCP.Editor
                     if (AssetDatabase.IsValidFolder(src))
                         return CreateErrorResponse("Copying folders is not supported. Copy individual assets.");
 
-                    var error = AssetDatabase.CopyAsset(src, dst);
-                    if (!string.IsNullOrEmpty(error))
-                        return CreateErrorResponse(error);
+                    if (!UnityCompat.TryCopyAsset(src, dst, out var copyError))
+                        return CreateErrorResponse(copyError ?? "Failed to copy asset");
                     return CreateSuccessResponse(new { from = src, to = dst }, "Asset copied");
                 }
 

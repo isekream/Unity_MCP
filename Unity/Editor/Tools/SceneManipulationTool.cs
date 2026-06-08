@@ -361,7 +361,7 @@ namespace UnityMCP.Editor
                 name = scene.name,
                 path = scene.path,
                 additive = args.additive,
-                loadedScenes = EditorSceneManager.loadedSceneCount
+                loadedScenes = UnityEngine.SceneManagement.SceneManager.loadedSceneCount
             }, $"Scene '{scene.name}' loaded");
         }
 

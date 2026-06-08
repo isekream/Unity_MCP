@@ -289,8 +289,10 @@ namespace UnityMCP.Editor
                 var defaultMaterialProperty = physicsType.GetProperty("defaultMaterial");
                 if (defaultMaterialProperty != null)
                 {
-                    var material = defaultMaterialProperty.GetValue(null) as PhysicMaterial;
-                    return material?.name ?? "None";
+                    // Cast to the base UnityEngine.Object: the concrete type was renamed
+                    // PhysicMaterial -> PhysicsMaterial in Unity 6, and we only read .name.
+                    var material = defaultMaterialProperty.GetValue(null) as UnityEngine.Object;
+                    return material != null ? material.name : "None";
                 }
                 return "Not Available";
             }
@@ -325,7 +327,7 @@ namespace UnityMCP.Editor
             {
                 totalScenes = scenes.Count,
                 activeScene = EditorSceneManager.GetActiveScene().name,
-                loadedScenes = EditorSceneManager.loadedSceneCount,
+                loadedScenes = UnityEngine.SceneManagement.SceneManager.loadedSceneCount,
                 scenes = scenes
             };
         }
@@ -419,7 +421,11 @@ namespace UnityMCP.Editor
                 connectProfiler = EditorUserBuildSettings.connectProfiler,
                 buildScriptsOnly = EditorUserBuildSettings.buildScriptsOnly,
                 allowDebugging = EditorUserBuildSettings.allowDebugging,
+#if UNITY_6000_0_OR_NEWER
+                symlinkLibraries = EditorUserBuildSettings.symlinkSources,
+#else
                 symlinkLibraries = EditorUserBuildSettings.symlinkLibraries,
+#endif
                 exportAsGoogleAndroidProject = EditorUserBuildSettings.exportAsGoogleAndroidProject
             };
         }
@@ -454,9 +460,9 @@ namespace UnityMCP.Editor
 
         private bool IsSceneLoaded(string scenePath)
         {
-            for (int i = 0; i < EditorSceneManager.loadedSceneCount; i++)
+            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.loadedSceneCount; i++)
             {
-                var loadedScene = EditorSceneManager.GetSceneAt(i);
+                var loadedScene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
                 if (loadedScene.path == scenePath)
                     return true;
             }
@@ -465,9 +471,9 @@ namespace UnityMCP.Editor
 
         private bool IsSceneDirty(string scenePath)
         {
-            for (int i = 0; i < EditorSceneManager.loadedSceneCount; i++)
+            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.loadedSceneCount; i++)
             {
-                var loadedScene = EditorSceneManager.GetSceneAt(i);
+                var loadedScene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
                 if (loadedScene.path == scenePath)
                     return loadedScene.isDirty;
             }

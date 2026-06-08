@@ -337,7 +337,7 @@ namespace UnityMCP.Editor
             var info = new Dictionary<string, object>
             {
                 ["name"] = go.name,
-                ["instanceId"] = go.GetEntityId(),
+                ["instanceId"] = UnityCompat.GetObjectId(go),
                 ["active"] = go.activeSelf,
                 ["activeInHierarchy"] = go.activeInHierarchy,
                 ["tag"] = go.tag,
@@ -400,11 +400,11 @@ namespace UnityMCP.Editor
 
             if (component is Rigidbody rb)
             {
-                props["velocity"] = Vec3(rb.linearVelocity);
-                props["angularVelocity"] = Vec3(rb.angularVelocity);
+                props["velocity"] = Vec3(UnityCompat.GetRigidbodyVelocity(rb));
+                props["angularVelocity"] = Vec3(UnityCompat.GetRigidbodyAngularVelocity(rb));
                 props["mass"] = rb.mass;
-                props["drag"] = rb.linearDamping;
-                props["angularDrag"] = rb.angularDamping;
+                props["drag"] = UnityCompat.GetRigidbodyDrag(rb);
+                props["angularDrag"] = UnityCompat.GetRigidbodyAngularDrag(rb);
                 props["useGravity"] = rb.useGravity;
                 props["isKinematic"] = rb.isKinematic;
                 props["isSleeping"] = rb.IsSleeping();
@@ -413,7 +413,7 @@ namespace UnityMCP.Editor
 
             if (component is Rigidbody2D rb2d)
             {
-                props["velocity"] = Vec2(rb2d.linearVelocity);
+                props["velocity"] = Vec2(UnityCompat.GetRigidbody2DVelocity(rb2d));
                 props["angularVelocity"] = rb2d.angularVelocity;
                 props["mass"] = rb2d.mass;
                 props["gravityScale"] = rb2d.gravityScale;
@@ -1057,11 +1057,11 @@ namespace UnityMCP.Editor
             {
                 return propertyName.ToLower() switch
                 {
-                    "velocity" or "linearvelocity" => Vec3Static(rb.linearVelocity),
-                    "angularvelocity" => Vec3Static(rb.angularVelocity),
+                    "velocity" or "linearvelocity" => Vec3Static(UnityCompat.GetRigidbodyVelocity(rb)),
+                    "angularvelocity" => Vec3Static(UnityCompat.GetRigidbodyAngularVelocity(rb)),
                     "position" => Vec3Static(rb.position),
                     "mass" => rb.mass,
-                    "drag" or "lineardamping" => rb.linearDamping,
+                    "drag" or "lineardamping" => UnityCompat.GetRigidbodyDrag(rb),
                     "issleeping" => rb.IsSleeping(),
                     _ => null
                 };
@@ -1071,7 +1071,7 @@ namespace UnityMCP.Editor
             {
                 return propertyName.ToLower() switch
                 {
-                    "velocity" or "linearvelocity" => Vec2Static(rb2d.linearVelocity),
+                    "velocity" or "linearvelocity" => Vec2Static(UnityCompat.GetRigidbody2DVelocity(rb2d)),
                     "angularvelocity" => rb2d.angularVelocity,
                     "position" => Vec2Static(rb2d.position),
                     "mass" => rb2d.mass,
@@ -1128,15 +1128,15 @@ namespace UnityMCP.Editor
 
             if (comp is Rigidbody rb)
             {
-                props["velocity"] = Vec3Static(rb.linearVelocity);
-                props["angularVelocity"] = Vec3Static(rb.angularVelocity);
+                props["velocity"] = Vec3Static(UnityCompat.GetRigidbodyVelocity(rb));
+                props["angularVelocity"] = Vec3Static(UnityCompat.GetRigidbodyAngularVelocity(rb));
                 props["position"] = Vec3Static(rb.position);
                 return props;
             }
 
             if (comp is Rigidbody2D rb2d)
             {
-                props["velocity"] = Vec2Static(rb2d.linearVelocity);
+                props["velocity"] = Vec2Static(UnityCompat.GetRigidbody2DVelocity(rb2d));
                 props["position"] = Vec2Static(rb2d.position);
                 return props;
             }

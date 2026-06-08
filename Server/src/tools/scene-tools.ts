@@ -45,6 +45,12 @@ export function createSceneTools(unityClient: UnityClient): Tool[] {
             },
             description: 'Scale of the GameObject',
           },
+          primitive: {
+            type: 'string',
+            enum: ['Cube', 'Sphere', 'Capsule', 'Cylinder', 'Plane', 'Quad'],
+            description:
+              'Optional Unity primitive to create (adds mesh, renderer, and collider)',
+          },
           components: {
             type: 'array',
             items: { type: 'string' },
@@ -65,6 +71,79 @@ export function createSceneTools(unityClient: UnityClient): Tool[] {
       async execute(args: Record<string, unknown>) {
         const result = await unityClient.sendRequest(
           'scene.createGameObject',
+          args
+        );
+        return result;
+      },
+    },
+
+    {
+      name: 'scene.createPrimitive',
+      description:
+        'Create a Unity primitive GameObject (Cube, Sphere, Capsule, Cylinder, Plane, or Quad) with mesh, renderer, and collider.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          name: {
+            type: 'string',
+            description: 'Name of the GameObject',
+          },
+          primitiveType: {
+            type: 'string',
+            enum: ['Cube', 'Sphere', 'Capsule', 'Cylinder', 'Plane', 'Quad'],
+            description: 'Primitive shape to create',
+          },
+          parent: {
+            type: 'string',
+            description: 'Name or instance ID of parent GameObject',
+          },
+          position: {
+            type: 'object',
+            properties: {
+              x: { type: 'number' },
+              y: { type: 'number' },
+              z: { type: 'number' },
+            },
+            description: 'World position of the GameObject',
+          },
+          rotation: {
+            type: 'object',
+            properties: {
+              x: { type: 'number' },
+              y: { type: 'number' },
+              z: { type: 'number' },
+            },
+            description: 'Euler rotation of the GameObject',
+          },
+          scale: {
+            type: 'object',
+            properties: {
+              x: { type: 'number', default: 1 },
+              y: { type: 'number', default: 1 },
+              z: { type: 'number', default: 1 },
+            },
+            description: 'Scale of the GameObject',
+          },
+          components: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Additional component types to add',
+          },
+          tag: {
+            type: 'string',
+            description: 'Tag to assign to the GameObject',
+          },
+          layer: {
+            type: 'number',
+            description: 'Layer to assign to the GameObject',
+          },
+        },
+        required: ['primitiveType'],
+        additionalProperties: false,
+      },
+      async execute(args: Record<string, unknown>) {
+        const result = await unityClient.sendRequest(
+          'scene.createPrimitive',
           args
         );
         return result;

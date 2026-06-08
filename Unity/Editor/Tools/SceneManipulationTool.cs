@@ -44,6 +44,7 @@ namespace UnityMCP.Editor
             public bool additive = false;
             public string componentType = "";
             public string componentAction = "";
+            public string primitiveType = "";
             public JObject properties;
         }
 
@@ -64,6 +65,7 @@ namespace UnityMCP.Editor
                 return action switch
                 {
                     "create_object" => CreateObject(args),
+                    "create_primitive" => CreatePrimitive(args),
                     "delete_object" => DeleteObject(args),
                     "set_transform" => SetTransform(args),
                     "modify_component" => ModifyComponent(args, parameters),
@@ -72,7 +74,7 @@ namespace UnityMCP.Editor
                     "save" => SaveScene(args),
                     "load" => LoadScene(args),
                     _ => CreateErrorResponse(
-                        $"Unknown action '{args.action}'. Supported: create_object, delete_object, set_transform, modify_component, query, select_objects, save, load")
+                        $"Unknown action '{args.action}'. Supported: create_object, create_primitive, delete_object, set_transform, modify_component, query, select_objects, save, load")
                 };
             }
             catch (Exception e)
@@ -84,10 +86,56 @@ namespace UnityMCP.Editor
 
         private object CreateObject(SceneParameters args)
         {
+            if (!string.IsNullOrWhiteSpace(args.primitiveType))
+                return CreatePrimitive(args);
+
             var name = string.IsNullOrWhiteSpace(args.name) ? "New Game Object" : args.name;
             var gameObject = new GameObject(name);
             Undo.RegisterCreatedObjectUndo(gameObject, "Create GameObject");
+            FinalizeCreatedObject(gameObject, args);
 
+            return CreateSuccessResponse(new
+            {
+                name = gameObject.name,
+                instanceId = UnityCompat.GetObjectId(gameObject),
+                scene = gameObject.scene.name,
+                components = gameObject.GetComponents<Component>().Select(c => c.GetType().Name).ToArray()
+            }, "GameObject created");
+        }
+
+        private object CreatePrimitive(SceneParameters args)
+        {
+            var primitiveName = !string.IsNullOrWhiteSpace(args.primitiveType)
+                ? args.primitiveType
+                : args.name;
+
+            var primitive = McpEditorHelpers.ParsePrimitiveType(primitiveName);
+            if (primitive == null)
+            {
+                return CreateErrorResponse(
+                    $"Invalid primitive type '{primitiveName}'. Supported: Cube, Sphere, Capsule, Cylinder, Plane, Quad.");
+            }
+
+            var gameObject = GameObject.CreatePrimitive(primitive.Value);
+            gameObject.name = string.IsNullOrWhiteSpace(args.name) || args.name == primitiveName
+                ? primitiveName
+                : args.name;
+
+            Undo.RegisterCreatedObjectUndo(gameObject, "Create Primitive");
+            FinalizeCreatedObject(gameObject, args);
+
+            return CreateSuccessResponse(new
+            {
+                name = gameObject.name,
+                primitive = primitive.Value.ToString(),
+                instanceId = UnityCompat.GetObjectId(gameObject),
+                scene = gameObject.scene.name,
+                components = gameObject.GetComponents<Component>().Select(c => c.GetType().Name).ToArray()
+            }, $"Primitive '{gameObject.name}' created");
+        }
+
+        private void FinalizeCreatedObject(GameObject gameObject, SceneParameters args)
+        {
             if (!string.IsNullOrWhiteSpace(args.parentName))
             {
                 var parent = McpEditorHelpers.FindGameObject(args.parentName);
@@ -117,14 +165,6 @@ namespace UnityMCP.Editor
             }
 
             MarkSceneDirty(gameObject.scene);
-
-            return CreateSuccessResponse(new
-            {
-                name = gameObject.name,
-                instanceId = UnityCompat.GetObjectId(gameObject),
-                scene = gameObject.scene.name,
-                components = gameObject.GetComponents<Component>().Select(c => c.GetType().Name).ToArray()
-            }, "GameObject created");
         }
 
         private object DeleteObject(SceneParameters args)
@@ -189,10 +229,16 @@ namespace UnityMCP.Editor
                     if (target.GetComponent(type) != null)
                         return CreateErrorResponse($"Component '{args.componentType}' already exists on '{target.name}'.");
                     var added = Undo.AddComponent(target, type);
+                    var addResult = ApplyComponentProperties(added, args.properties);
+                    if (!addResult.Success)
+                        return CreateErrorResponse("Component added but property assignment failed.", string.Join("; ", addResult.Errors));
+
+                    MarkSceneDirty(target.scene);
                     return CreateSuccessResponse(new
                     {
                         gameObject = target.name,
-                        component = added.GetType().Name
+                        component = added.GetType().Name,
+                        propertiesApplied = addResult.Applied.ToArray()
                     }, "Component added");
                 }
                 case "remove":
@@ -201,10 +247,29 @@ namespace UnityMCP.Editor
                     if (existing == null)
                         return CreateErrorResponse($"Component '{args.componentType}' not found on '{target.name}'.");
                     Undo.DestroyObjectImmediate(existing);
+                    MarkSceneDirty(target.scene);
                     return CreateSuccessResponse(new { gameObject = target.name, component = args.componentType }, "Component removed");
                 }
                 case "modify":
-                    return CreateErrorResponse("Component property modification in Edit Mode is not yet supported. Use playmode.setProperty during Play Mode.");
+                {
+                    var existing = target.GetComponent(type);
+                    if (existing == null)
+                        return CreateErrorResponse($"Component '{args.componentType}' not found on '{target.name}'.");
+                    if (args.properties == null || !args.properties.HasValues)
+                        return CreateErrorResponse("properties object is required for modify action.");
+
+                    var modifyResult = ApplyComponentProperties(existing, args.properties);
+                    if (!modifyResult.Success)
+                        return CreateErrorResponse("Component property modification failed.", string.Join("; ", modifyResult.Errors));
+
+                    MarkSceneDirty(target.scene);
+                    return CreateSuccessResponse(new
+                    {
+                        gameObject = target.name,
+                        component = existing.GetType().Name,
+                        propertiesApplied = modifyResult.Applied.ToArray()
+                    }, "Component properties updated");
+                }
                 default:
                     return CreateErrorResponse($"Unknown component action '{compAction}'. Use add, remove, or modify.");
             }
@@ -403,6 +468,11 @@ namespace UnityMCP.Editor
                 EditorSceneManager.MarkSceneDirty(scene);
         }
 
+        private static McpEditorHelpers.ApplyPropertiesResult ApplyComponentProperties(Component component, JObject properties)
+        {
+            return McpEditorHelpers.ApplySerializedProperties(component, properties);
+        }
+
         private static object Vec(Vector3 v) => new { x = v.x, y = v.y, z = v.z };
 
         private SceneParameters NormalizeParameters(object parameters)
@@ -468,6 +538,12 @@ namespace UnityMCP.Editor
                 args.relative = source.Value<bool?>("relative") ?? args.relative;
                 args.additive = source.Value<bool?>("additive") ?? args.additive;
                 args.componentType = source.Value<string>("componentType") ?? args.componentType;
+                args.primitiveType = source.Value<string>("primitive")
+                    ?? source.Value<string>("primitiveType")
+                    ?? args.primitiveType;
+
+                if (source["properties"] is JObject propsObj)
+                    args.properties = propsObj;
             }
 
             return args;

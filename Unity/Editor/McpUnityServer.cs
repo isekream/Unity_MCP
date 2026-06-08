@@ -632,6 +632,7 @@ namespace UnityMCP.Editor
             switch (action)
             {
                 case "createGameObject": return "create_object";
+                case "createPrimitive": return "create_primitive";
                 case "deleteGameObject": return "delete_object";
                 case "moveGameObject": return "set_transform";
                 case "createScript": return "create_script";

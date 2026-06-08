@@ -109,22 +109,23 @@ namespace UnityMCP.Editor
 
                 EnsureLogHandlerRegistered();
 
-                return args.action switch
+                var action = (args.action ?? "").Trim().ToLowerInvariant();
+                return action switch
                 {
-                    "getState" => GetPlayModeState(),
+                    "getstate" or "get_state" => GetPlayModeState(),
                     "enter" => EnterPlayMode(args),
                     "exit" => ExitPlayMode(),
                     "pause" => PausePlayMode(),
                     "resume" => ResumePlayMode(),
                     "step" => StepFrame(args),
-                    "inspectGameObject" => InspectGameObject(args),
-                    "setProperty" => SetProperty(args),
-                    "invokeMethod" => InvokeMethod(args),
-                    "getConsoleLogs" => GetConsoleLogs(args),
-                    "getRuntimeInfo" => GetRuntimeInfo(args),
-                    "setTimeScale" => SetTimeScale(args),
+                    "inspectgameobject" or "inspect_game_object" => InspectGameObject(args),
+                    "setproperty" or "set_property" => SetProperty(args),
+                    "invokemethod" or "invoke_method" => InvokeMethod(args),
+                    "getconsolelogs" or "get_console_logs" => GetConsoleLogs(args),
+                    "getruntimeinfo" or "get_runtime_info" => GetRuntimeInfo(args),
+                    "settimescale" or "set_time_scale" => SetTimeScale(args),
                     "observe" => ObserveRuntime(args),
-                    "simulateInput" => SimulateInput(args),
+                    "simulateinput" or "simulate_input" => SimulateInput(args),
                     _ => CreateErrorResponse($"Unknown playmode action: {args.action}")
                 };
             }

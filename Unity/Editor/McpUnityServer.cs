@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading;
+using System.Collections.Concurrent;
 using UnityEngine;
 using UnityEditor;
 using Newtonsoft.Json;
@@ -30,21 +31,36 @@ namespace UnityMCP.Editor
         private static int requestTimeout = 10;
         private static bool autoStart = false;
         private static Thread listenerThread;
+        private static readonly ConcurrentQueue<Action> mainThreadActions = new ConcurrentQueue<Action>();
         
         private Vector2 scrollPosition;
         private string logText = "";
         private readonly List<string> logs = new List<string>();
-        private readonly Dictionary<string, McpToolBase> tools = new Dictionary<string, McpToolBase>();
+        private static readonly Dictionary<string, McpToolBase> tools = new Dictionary<string, McpToolBase>();
         
         static McpUnityServer()
         {
-            LoadPreferences();
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-            
-            if (autoStart)
+
+            // Single persistent main-thread pump. Tool execution is dispatched here
+            // (via RunOnMainThread) instead of EditorApplication.delayCall, which is a
+            // non-thread-safe static delegate and drops callbacks when subscribed from
+            // the background listener thread under concurrency.
+            EditorApplication.update += PumpMainThreadActions;
+
+            // IMPORTANT: Never call LoadPreferences() (or any EditorPrefs.*) directly
+            // from the static constructor of an EditorWindow/ScriptableObject-derived type.
+            // Unity forbids it and throws "GetInt is not allowed to be called from a
+            // ScriptableObject constructor". We defer it.
+            EditorApplication.delayCall += () =>
             {
-                EditorApplication.delayCall += () => StartServer();
-            }
+                LoadPreferences();
+
+                if (autoStart)
+                {
+                    StartServer();
+                }
+            };
         }
 
         [MenuItem(MENU_PATH, false, 1)]
@@ -215,13 +231,18 @@ namespace UnityMCP.Editor
 
             try
             {
+                // Ensure the tool registry is populated before any request can arrive.
+                // The registry is static and independent of the EditorWindow, so the
+                // server functions even when the window is closed.
+                InitializeTools();
+
                 httpListener = new HttpListener();
                 httpListener.Prefixes.Add($"http://localhost:{serverPort}/");
                 httpListener.Start();
-                
+
                 isServerRunning = true;
                 LogMessage($"MCP Server started on port {serverPort}");
-                
+
                 // Start listening thread
                 listenerThread = new Thread(HandleRequests);
                 listenerThread.Start();
@@ -269,7 +290,10 @@ namespace UnityMCP.Editor
                 try
                 {
                     var context = httpListener.GetContext();
-                    ProcessRequest(context);
+                    // Service each request on a worker thread so the listener can immediately
+                    // accept the next connection. ExecuteTool blocks its worker while waiting
+                    // for the main-thread pump; that must not stall the accept loop.
+                    ThreadPool.QueueUserWorkItem(_ => ProcessRequest(context));
                 }
                 catch (HttpListenerException)
                 {
@@ -318,10 +342,13 @@ namespace UnityMCP.Editor
             }
         }
 
-        private void InitializeTools()
+        private static void InitializeTools()
         {
-            tools.Clear();
-            
+            if (tools.Count > 0)
+            {
+                return;
+            }
+
             // Register all available tools
             RegisterTool(new ProjectAnalyzerTool());
             RegisterTool(new SceneManipulationTool());
@@ -336,7 +363,7 @@ namespace UnityMCP.Editor
             LogMessage($"Initialized {tools.Count} MCP tools");
         }
 
-        private void RegisterTool(McpToolBase tool)
+        private static void RegisterTool(McpToolBase tool)
         {
             if (tool != null && !string.IsNullOrEmpty(tool.ToolName))
             {
@@ -344,23 +371,57 @@ namespace UnityMCP.Editor
             }
         }
 
+        /// <summary>
+        /// Enqueues an action to run on the Unity main thread. Thread-safe; drained by
+        /// PumpMainThreadActions on EditorApplication.update.
+        /// </summary>
+        public static void RunOnMainThread(Action action)
+        {
+            if (action != null)
+            {
+                mainThreadActions.Enqueue(action);
+            }
+        }
+
+        private static void PumpMainThreadActions()
+        {
+            while (mainThreadActions.TryDequeue(out var action))
+            {
+                try
+                {
+                    action();
+                }
+                catch (Exception e)
+                {
+                    LogError($"Main-thread action failed: {e.Message}");
+                }
+            }
+        }
+
+        private class ToolExecutionState
+        {
+            public volatile bool IsComplete;
+            public McpResponse Result;
+            public Exception Error;
+            public volatile AsyncToolResult Async;
+        }
+
         public static McpResponse ExecuteTool(string toolName, object parameters)
         {
-            if (!instance.tools.ContainsKey(toolName))
+            InitializeTools();
+
+            if (!tools.ContainsKey(toolName))
             {
                 return McpResponse.CreateError($"Tool '{toolName}' not found");
             }
 
             try
             {
-                var tool = instance.tools[toolName];
-                McpResponse result = null;
-                Exception resultException = null;
-                bool isComplete = false;
-                AsyncToolResult asyncOp = null;
+                var tool = tools[toolName];
+                var state = new ToolExecutionState();
 
-                // Execute tool on main thread
-                EditorApplication.delayCall += () =>
+                // Dispatch tool execution to the main thread via the persistent pump.
+                RunOnMainThread(() =>
                 {
                     try
                     {
@@ -368,33 +429,32 @@ namespace UnityMCP.Editor
 
                         if (execResult is AsyncToolResult async)
                         {
-                            asyncOp = async;
+                            state.Async = async;
                         }
                         else
                         {
-                            result = McpResponse.CreateSuccess(execResult);
+                            state.Result = McpResponse.CreateSuccess(execResult);
                             LogMessage($"Executed tool: {toolName}");
-                            isComplete = true;
+                            state.IsComplete = true;
                         }
                     }
                     catch (Exception e)
                     {
                         LogError($"Error executing tool '{toolName}': {e.Message}");
-                        resultException = e;
-                        isComplete = true;
+                        state.Error = e;
+                        state.IsComplete = true;
                     }
-                };
+                });
 
-                // Wait for completion (with timeout)
+                // Wait for completion (with timeout) on this worker thread.
                 var startTime = DateTime.Now;
                 var defaultTimeout = TimeSpan.FromSeconds(requestTimeout);
 
-                while (!isComplete && DateTime.Now - startTime < defaultTimeout)
+                while (!state.IsComplete && DateTime.Now - startTime < defaultTimeout)
                 {
-                    // Check if async operation was started
+                    var asyncOp = state.Async;
                     if (asyncOp != null)
                     {
-                        // Extend timeout to accommodate the async operation
                         var asyncTimeout = TimeSpan.FromSeconds(asyncOp.TimeoutSeconds > 0
                             ? asyncOp.TimeoutSeconds
                             : requestTimeout);
@@ -407,35 +467,35 @@ namespace UnityMCP.Editor
 
                         if (asyncOp.IsComplete)
                         {
-                            result = asyncOp.Error != null
+                            state.Result = asyncOp.Error != null
                                 ? McpResponse.CreateError(asyncOp.Error)
                                 : McpResponse.CreateSuccess(asyncOp.Result);
                             LogMessage($"Executed async tool: {toolName}");
                         }
                         else
                         {
-                            result = McpResponse.CreateError(
+                            state.Result = McpResponse.CreateError(
                                 $"Async tool '{toolName}' timed out after {asyncTimeout.TotalSeconds}s");
                         }
 
-                        isComplete = true;
+                        state.IsComplete = true;
                         break;
                     }
 
                     Thread.Sleep(10);
                 }
 
-                if (!isComplete)
+                if (!state.IsComplete)
                 {
                     return McpResponse.CreateError($"Tool '{toolName}' execution timed out after {requestTimeout} seconds");
                 }
 
-                if (resultException != null)
+                if (state.Error != null)
                 {
-                    return McpResponse.CreateError(resultException.Message);
+                    return McpResponse.CreateError(state.Error.Message);
                 }
 
-                return result;
+                return state.Result;
             }
             catch (Exception e)
             {
@@ -462,13 +522,10 @@ namespace UnityMCP.Editor
             string toolAction = methodParts[1];
             string exactToolName = $"{toolCategory}_{toolAction}";
 
-            if (instance == null)
-            {
-                return McpResponse.CreateError("MCP Server window is not open. Open it via Tools > Unity MCP > Server Window.");
-            }
+            InitializeTools();
 
             // Try exact match first (e.g., "scene_capture")
-            if (instance.tools.ContainsKey(exactToolName))
+            if (tools.ContainsKey(exactToolName))
             {
                 return ExecuteTool(exactToolName, request.Params);
             }
@@ -476,7 +533,7 @@ namespace UnityMCP.Editor
             // Fall back to category-level tool and inject action into params.
             // This routes "playmode.enter" → tool "playmode" with action="enter",
             // and "scene.createGameObject" → tool "scene_manipulate" with action injected.
-            foreach (var kvp in instance.tools)
+            foreach (var kvp in tools)
             {
                 if (kvp.Value.Category == toolCategory)
                 {
